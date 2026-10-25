@@ -1,0 +1,17 @@
+node_modules/
+.next/
+dist/
+build/
+.venv/
+__pycache__/
+*.egg-info/
+.env
+.env.*
+!.env.example
+.run/
+.forma-data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.DS_Store
