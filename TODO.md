@@ -2,7 +2,7 @@
 
 Recorded 2026-10-25. Live ticket status remains in the canonical shared FORMA tracker linked from TRACKING.md; this file records repository decisions, not another board.
 
-The owner selected this dedicated skeleton repo. Initial source contracts and developer handoff are being transferred as reviewed documentation; existing business applications/data are retained in forma-kernel-care-center. No executable generator or template implementation has been transferred or created by this initialization.
+The owner selected this dedicated skeleton repo. Initial source contracts and developer handoff were initialized as reviewed documentation; existing business applications/data are retained in forma-kernel-care-center. No executable generator or template implementation has been transferred or created by this initialization.
 
 Next bounded source task is FORMA-0019: finalize configuration/module/extension schema after the source/module contract. Generation/assembly, full parent-controlled presentation, password/2FA/social identity, independent consumer proof and safe upgrades remain separately ticketed. Before implementing, Codex assigns current scope and peer review and reconciles both repos' latest source/tracker states.
 
