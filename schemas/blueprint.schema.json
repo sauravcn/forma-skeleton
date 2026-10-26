@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forma.invalid/schemas/blueprint.schema.json",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+      "maxLength": 80
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "compatibleGenerator": {
+      "const": "0.1.x"
+    },
+    "requiredModules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+        "maxLength": 80
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "source": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          }
+        },
+        "required": ["from", "to"],
+        "additionalProperties": false
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "authModes": {
+          "type": "array",
+          "items": {
+            "enum": ["none", "password", "social", "password-social"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "enum": ["google", "facebook", "github", "microsoft", "apple"]
+          },
+          "uniqueItems": true
+        },
+        "twoFactor": {
+          "type": "boolean"
+        },
+        "extensions": {
+          "type": "boolean"
+        }
+      },
+      "required": ["authModes", "providers", "twoFactor", "extensions"],
+      "additionalProperties": false
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+            "maxLength": 80
+          },
+          "kind": {
+            "enum": ["foundation", "domain"]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          },
+          "requires": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+              "maxLength": 80
+            },
+            "uniqueItems": true
+          },
+          "source": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 240
+                },
+                "to": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 240
+                }
+              },
+              "required": ["from", "to"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["id", "kind", "version", "requires", "source"],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "compatibleGenerator",
+    "requiredModules",
+    "source",
+    "capabilities",
+    "modules"
+  ],
+  "additionalProperties": false
+}

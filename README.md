@@ -2,7 +2,7 @@
 
 The canonical source home for Forma's reusable application blueprint and future app generator, selected by Saurav on October 25, 2026.
 
-**Current state: architecture and developer-handoff initialization only.** There is no runnable generator, template implementation, published `npx` package or application startup command here yet. Creating this repository does not implement password/2FA, social sign-in, hosting, licensing or AI customization.
+**Current state: executable configuration validation is implemented and tested; generator/templates are the next milestone.** The first blueprint explicitly permits only a public synthetic/no-auth starter. Password/2FA, social sign-in, hosting, licensing and guided AI remain separately unfinished; unsupported choices fail rather than generate fake capabilities.
 
 ## Repository boundaries
 
@@ -21,7 +21,7 @@ Source extraction from existing application libraries is future reviewed work: p
 1. Read [AGENTS.md](AGENTS.md), [TODO.md](TODO.md), [HANDOFF.md](HANDOFF.md) and the [standalone source/module contract](docs/architecture/standalone-contract.md).
 2. Use [TRACKING.md](TRACKING.md) for the shared work board, coverage, roster and coordination links. There is **one global FORMA ticket series**, not a second skeleton backlog.
 3. Fetch/inspect source and dirty state, get the lead's assigned ticket/file scope, and preserve existing work. Do not run application setup/migrations or copy local databases merely to initialize this repository.
-4. Follow the assigned code ticket's actual install/build/test commands once executable source is introduced. `npm install`, `npm start` and `npx create-forma-app` are not delivered setup steps today.
+4. Install dependencies with `npm ci`, run `npm test` and `npm run check:config` for the executable contract. A host with an unavailable default npm cache can use `--cache .run/npm-cache`. There is not yet a runnable generated app or published `npx create-forma-app` package.
 
 You may clone this source independently:
 

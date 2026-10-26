@@ -1,3 +1,7 @@
+## Implementation started — owner-authorized peer review and main checkpoints
+
+FORMA-0019 now includes executable strict JSON schemas, deterministic module/capability validation and unsafe-path/field rejection. Six focused tests pass with pinned AJV8.20.0; production dependency audit reports zero current advisories. Saurya reviewed actual source and approved configuration-contract scope. No runnable generator/auth feature is claimed yet. The next assigned team milestone is complete CLI/template assembly and an external neutral public-synthetic app proof. Existing apps/owner data remain untouched.
+
 # Repository-local decisions and next step
 
 Recorded 2026-10-25. Live ticket status remains in the canonical shared FORMA tracker linked from TRACKING.md; this file records repository decisions, not another board.

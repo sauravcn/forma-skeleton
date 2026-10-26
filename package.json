@@ -1,0 +1,19 @@
+{
+  "name": "forma-skeleton",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/config"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test packages/config/test/*.test.mjs",
+    "check:config": "node packages/config/src/check.mjs"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

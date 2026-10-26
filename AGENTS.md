@@ -22,6 +22,6 @@ The current issue authority is https://github.com/sauravcn/forma-kernel-care-cen
 
 ## Completion and Git
 
-Current repository initialization delivers planning/handoff documents only. Do not claim executable generator, app template, new auth, hosting or production readiness from an empty directory/manifest. Tests must prove independent external install/build/run when code exists. API-provider setup and live acceptance are separate from mocks/adapters.
+Repository initialization delivered planning/handoff documents; FORMA-0019 now introduces executable configuration validation. Generator/template capability must still be proven independently. Do not claim executable generator, app template, new auth, hosting or production readiness from an empty directory/manifest. Tests must prove independent external install/build/run when code exists. API-provider setup and live acceptance are separate from mocks/adapters.
 
 Use the assigned FORMA key in commits. Keep application source untouched during extraction/setup. Existing reviewed docs may initialize main; future substantive implementation uses scoped reviewed feature work. User-authorized commits/pushes are permitted; verify actual remote SHAs and report unpushed work. Do not force/rewrite history or publicly deploy/purchase resources from a ticket alone. Preserve existing remote content and never overwrite a concurrently initialized repo. Git backup covers tracked files only, not processes/secrets/runtime data.

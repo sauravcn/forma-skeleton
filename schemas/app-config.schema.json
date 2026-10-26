@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forma.invalid/schemas/app-config.schema.json",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "minLength": 2,
+      "maxLength": 64
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+        "maxLength": 80
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "navigation": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "enum": ["sidebar", "top", "combined"]
+        }
+      },
+      "required": ["layout"],
+      "additionalProperties": false
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "preset": {
+          "enum": ["linen", "midnight"]
+        },
+        "tokens": {
+          "type": "object",
+          "properties": {
+            "accent": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "background": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "surface": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "text": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "muted": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "border": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "radius": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 32
+            },
+            "fontFamily": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9 ,'-]+$",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": ["preset", "tokens"],
+      "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": ["none", "password", "social", "password-social"]
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "enum": ["google", "facebook", "github", "microsoft", "apple"]
+          },
+          "uniqueItems": true
+        },
+        "twoFactor": {
+          "type": "boolean"
+        }
+      },
+      "required": ["mode", "providers", "twoFactor"],
+      "additionalProperties": false
+    },
+    "locale": {
+      "const": "en-US"
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+            "maxLength": 80
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          }
+        },
+        "required": ["id", "source"],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "modules",
+    "navigation",
+    "theme",
+    "auth",
+    "locale",
+    "extensions"
+  ],
+  "additionalProperties": false
+}

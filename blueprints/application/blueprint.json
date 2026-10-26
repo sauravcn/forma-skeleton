@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "forma.application",
+  "version": "0.1.0",
+  "compatibleGenerator": "0.1.x",
+  "requiredModules": ["presentation", "localization", "navigation", "records"],
+  "source": [],
+  "capabilities": {
+    "authModes": ["none"],
+    "providers": [],
+    "twoFactor": false,
+    "extensions": false
+  },
+  "modules": [
+    {
+      "id": "presentation",
+      "kind": "foundation",
+      "version": "0.1.0",
+      "requires": [],
+      "source": [
+        {
+          "from": "frontend",
+          "to": "frontend"
+        }
+      ]
+    },
+    {
+      "id": "localization",
+      "kind": "foundation",
+      "version": "0.1.0",
+      "requires": ["presentation"],
+      "source": []
+    },
+    {
+      "id": "navigation",
+      "kind": "foundation",
+      "version": "0.1.0",
+      "requires": ["presentation", "localization"],
+      "source": []
+    },
+    {
+      "id": "records",
+      "kind": "domain",
+      "version": "0.1.0",
+      "requires": ["navigation"],
+      "source": [
+        {
+          "from": "backend",
+          "to": "backend"
+        }
+      ]
+    }
+  ]
+}
