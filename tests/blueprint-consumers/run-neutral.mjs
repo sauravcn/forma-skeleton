@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import net from "node:net";
+import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -166,6 +167,100 @@ try {
     ],
     installed,
   );
+  const mirror = path.join(outputRoot, "equivalent-source");
+  await run(
+    process.execPath,
+    [
+      cli,
+      mirror,
+      "--yes",
+      "--id",
+      "neutral-desk",
+      "--name",
+      "Neutral Desk",
+      "--navigation",
+      "sidebar",
+      "--theme",
+      "linen",
+    ],
+    installed,
+  );
+  const inventory = JSON.parse(
+    await fs.readFile(path.join(application, "SOURCE_MANIFEST.json"), "utf8"),
+  );
+  assert.deepEqual(
+    JSON.parse(
+      await fs.readFile(path.join(mirror, "SOURCE_MANIFEST.json"), "utf8"),
+    ),
+    inventory,
+    "equivalent generation has reproducible source inventory",
+  );
+  async function deliveredFiles(root, relative = "") {
+    const files = [];
+    for (const name of await fs.readdir(path.join(root, relative))) {
+      const entry = relative ? `${relative}/${name}` : name;
+      const stat = await fs.lstat(path.join(root, entry));
+      assert.equal(
+        stat.isSymbolicLink(),
+        false,
+        entry + " no file/directory symlinks",
+      );
+      if (stat.isDirectory())
+        files.push(...(await deliveredFiles(root, entry)));
+      else {
+        assert.ok(stat.isFile(), entry + " ordinary source file");
+        files.push(entry);
+      }
+    }
+    return files.sort();
+  }
+  const expectedFiles = [
+    ...Object.keys(inventory.files),
+    "SOURCE_MANIFEST.json",
+    ".forma-generation.json",
+  ].sort();
+  for (const root of [application, mirror])
+    assert.deepEqual(
+      await deliveredFiles(root),
+      expectedFiles,
+      "no unlisted generated artifacts",
+    );
+  for (const metadata of ["SOURCE_MANIFEST.json", ".forma-generation.json"])
+    assert.deepEqual(
+      await fs.readFile(path.join(application, metadata)),
+      await fs.readFile(path.join(mirror, metadata)),
+      metadata + " reproducible bytes",
+    );
+  for (const [relative, entry] of Object.entries(inventory.files)) {
+    assert.equal(path.isAbsolute(relative), false);
+    assert.equal(relative.split("/").includes(".."), false);
+    const delivered = path.join(application, relative);
+    assert.equal((await fs.lstat(delivered)).isSymbolicLink(), false);
+    assert.equal(
+      createHash("sha256")
+        .update(await fs.readFile(delivered))
+        .digest("hex"),
+      entry.sha256,
+      relative + " delivered digest",
+    );
+    assert.deepEqual(
+      await fs.readFile(path.join(mirror, relative)),
+      await fs.readFile(delivered),
+      relative + " reproducible bytes",
+    );
+  }
+  for (const required of [
+    "frontend/src/messages/en.json",
+    "backend/starter_api/migrations/001_records.sql",
+    "package-lock.json",
+    ".env.example",
+    "THIRD_PARTY_NOTICES",
+    "scripts/run.mjs",
+  ])
+    assert.ok(
+      inventory.files[required],
+      required + " required delivered source",
+    );
   const before = await fs.readFile(
     path.join(application, "app.config.json"),
     "utf8",
@@ -256,6 +351,7 @@ try {
     checks: [
       "installed tarball generation",
       "destination refusal",
+      "reproducible delivered source hashes and required closure",
       "independent npm install/test/build/start",
       "HTTP create/update/stale denial",
       "foreign-origin denial",

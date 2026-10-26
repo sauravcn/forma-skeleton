@@ -4,7 +4,7 @@ Recorded 2026-10-26. Canonical ticket state is in the shared tracker linked from
 
 The dedicated forma-skeleton repository owns the generator and copied-source blueprint. Existing business apps and the sole FORMA tracker remain in forma-kernel-care-center. Owner authorized scoped implementation, peer review, tested main promotion and backups.
 
-Configuration validation (FORMA-0019) is merged at 01c971a. Generator/frontend/backend implementation follows on the existing feature/forma-0016-generator branch. Its initial supported output is explicitly public synthetic/no-auth, with all required source included. No secrets or runtime data are transferred.
+Configuration validation (FORMA-0019) is merged at 01c971a. Generator/frontend/backend implementation is merged on main at27d2696 and retained on feature/forma-0016-generator. Its initial supported output is explicitly public synthetic/no-auth, with all required source included. No secrets or runtime data are transferred.
 
 Next gates: installed npm-command generation, clean external npm ci/tests/build/start/restart, six actual browser theme/navigation variants, full shell source replacement and peer approval. Record exact final verification in HANDOFF before promotion. FORMA-0016 and full authenticated-consumer scope remain open even after this neutral milestone.
 
