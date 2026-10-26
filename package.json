@@ -15,7 +15,8 @@
     "check:config": "node packages/config/src/check.mjs",
     "build:cli": "npm run build --workspace create-forma-app",
     "test:consumer": "node tests/blueprint-consumers/run-neutral.mjs",
-    "test:visual": "node tests/blueprint-consumers/run-visual.mjs"
+    "test:visual": "node tests/blueprint-consumers/run-visual.mjs",
+    "test:python-package": "python3 tests/blueprint-consumers/verify-python-package.py"
   },
   "devDependencies": {
     "playwright": "1.64.1",
