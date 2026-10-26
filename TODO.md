@@ -11,3 +11,8 @@ Next gates: installed npm-command generation, clean external npm ci/tests/build/
 Follow-on work: maintained-library identity boundary, password/TOTP/recovery/provider adapters; full presentation/accessibility/localization contract; safe upgrade proposals; AI customization; per-purchase licensing and hosting. Unsupported capabilities must fail honestly. No paid infrastructure, registry publication or production deployment is authorized by a coding ticket alone.
 
 Follow-on source work: navigation manifest0034 is reviewed/merged; renderer keyboard acceptance0035 is reviewed and verified. Reviewed developer-agent guidance/OpenAPI delivery0064 and non-shipped basic-session identity0039 proof follow; actual generated authentication/password/TOTP/providers remain unfinished. Never treat fixture tests as their acceptance.
+
+
+## Active generated identity integration — 2026-10-26
+
+Owner reaffirmed peer review, tested main merges and board updates; no new repository is needed. Reviewed skeleton main is2721fc1 (semantic parent themes), with recovery enrollment hardening ece07c4 included. Presentation0029/0177 is Done; generated authenticated release0176 remains In Progress, not enabled yet. Assigned0178 Saurya runtime/domain protection,0179 Aarav actual UI/controller,0180 Shreesh generator/source closure; Codex owns cross-profile external browser acceptance and integration. Read skeleton docs/architecture/generated-identity-integration.md for exact shared interfaces. Public none profile must preserve behavior. No live mail/OAuth/production or uninterrupted overnight guarantee. Local must fetch/read latest board/source and obtain scope reconciliation before overlapping edits.
