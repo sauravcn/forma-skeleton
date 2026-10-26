@@ -13,4 +13,4 @@ Relevant source work: FORMA-0018 source/module contract, FORMA-0019 config/exten
 
 Status edits are made in the tracker repository with its validated CLI or by the lead's reviewed integration. Profiles/docs do not create a live shared server, direct local-chat messaging or an always-on worker. OpenProject Community remains a separate proposed pilot pending hosting/import/access acceptance.
 
-For local work, clone this repository alongside the application repository, not inside its ignored/generated directories. Report both source revisions and assigned scope. Application-only startup stays in the application's LOCAL_RESUME.md; there is no runnable skeleton command yet.
+For local work, clone this repository alongside the application repository, not inside its ignored/generated directories. Report both source revisions and assigned scope. Application-only startup stays in the application's LOCAL_RESUME.md; the local generator and neutral starter commands are documented in README; authentication and full-release tickets remain open.

@@ -1,0 +1,17 @@
+Forma neutral development starter
+
+The generated project contains original Forma starter source and normal declared
+third-party dependencies. No customer purchase entitlement or copyright transfer
+is issued by generation. Commercial source license terms must be supplied through
+an authorized separate agreement; no invented LICENSE grant is emitted here.
+
+Declared frontend dependencies (see frontend/package.json and installed lockfile):
+- Next.js: MIT, https://github.com/vercel/next.js/blob/canary/license.md
+- React and React DOM: MIT, https://github.com/facebook/react/blob/main/LICENSE
+
+Their packages include upstream license notices, which must be retained when
+redistributing installed dependencies. Python/Node runtime licenses are supplied
+by their distributions. The CLI uses AJV (MIT) to validate inputs; AJV is a CLI
+dependency, not required by the generated app unless independently added.
+
+This notice inventory is not a customer source-sale contract or legal opinion.

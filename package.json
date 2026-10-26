@@ -4,16 +4,21 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/config"
+    "packages/config",
+    "tools/create-forma-app"
   ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test packages/config/test/*.test.mjs",
-    "check:config": "node packages/config/src/check.mjs"
+    "test": "node --test packages/config/test/*.test.mjs && npm run test --workspace create-forma-app",
+    "check:config": "node packages/config/src/check.mjs",
+    "build:cli": "npm run build --workspace create-forma-app",
+    "test:consumer": "node tests/blueprint-consumers/run-neutral.mjs",
+    "test:visual": "node tests/blueprint-consumers/run-visual.mjs"
   },
   "devDependencies": {
+    "playwright": "1.64.1",
     "prettier": "3.6.2"
   }
 }

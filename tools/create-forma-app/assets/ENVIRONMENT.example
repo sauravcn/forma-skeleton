@@ -1,0 +1,7 @@
+# Public synthetic starter: no authentication or secret values are configured.
+# The launcher reads exported environment variables; it does not auto-load .env.
+# Set these in your shell or approved local environment manager before npm start.
+WEB_PORT=3000
+API_PORT=8765
+DATABASE_PATH=backend/data/records.sqlite3
+PYTHON_BIN=python3

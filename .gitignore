@@ -15,3 +15,6 @@ __pycache__/
 *.sqlite3
 *.log
 .DS_Store
+
+# Rebuilt by the CLI prepack step; source and reproducible packaging stay tracked.
+tools/create-forma-app/bundle/

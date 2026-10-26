@@ -1,0 +1,29 @@
+{
+  "name": "create-forma-app",
+  "version": "0.1.0",
+  "description": "Generate complete local-source Forma synthetic starters from a bundled blueprint",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "create-forma-app": "bin/create-forma-app.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "bin",
+    "src",
+    "assets",
+    "bundle",
+    "scripts/build.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepack": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  }
+}

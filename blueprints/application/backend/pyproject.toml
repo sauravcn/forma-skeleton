@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "starter-records-api"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+description = "App-local public synthetic records development API"
+
+[project.scripts]
+starter-records-api = "starter_api.server:main"
+
+[tool.setuptools.packages.find]
+include = ["starter_api*"]
+
+[tool.setuptools.package-data]
+starter_api = ["migrations/*.sql"]
