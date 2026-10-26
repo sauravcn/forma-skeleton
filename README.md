@@ -76,3 +76,7 @@ Developer-assistant guidance and a machine-readable public records API contract 
 The separate packages/identity-boundary engineering fixture exercises maintained PostgreSQL sessions and server-derived Python ownership with `npm run test:identity-boundary` (Docker and cached postgres:17-bookworm required). It is not bundled into generated apps and does not implement password/TOTP/provider lifecycle. See its README and the identity design for exact limits.
 
 After a fresh `npm run test:consumer`, run `npm run test:navigation` for nested-manifest and keyboard/modal/focus checks across the three renderers. It modifies only the temporary generated example and uses its own synthetic database.
+
+Optional identity presentation remains outside generated output. After test:consumer, `npm run test:auth-presentation` copies the module into a fresh dependency-installed fixture and checks controlled views, parent styles and complete layout replacement. Actual view-only captures: [split desktop](docs/screenshots/auth-view-split-desktop.png), [minimal mobile](docs/screenshots/auth-view-minimal-mobile.png).
+
+`npm run test:identity-lifecycle` exercises the separate maintained username/email/password, verification/reset and revocation candidate with disposable PostgreSQL and synthetic in-memory mail capture. Mail responses do not assert delivery; explicit transport and redacted failure monitoring are required. This candidate is not bundled or enabled in the starter; MFA, real mail acceptance and full generated identity integration remain open.

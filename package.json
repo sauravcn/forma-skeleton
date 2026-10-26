@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/config",
     "tools/create-forma-app",
-    "packages/identity-boundary"
+    "packages/identity-boundary",
+    "packages/identity-lifecycle"
   ],
   "engines": {
     "node": ">=22"
@@ -20,7 +21,9 @@
     "test:python-package": "python3 tests/blueprint-consumers/verify-python-package.py",
     "test:identity-boundary": "npm run test --workspace @forma/identity-boundary-proof",
     "test:templates": "node --test blueprints/application/frontend/test/*.test.mjs && python3 -m unittest discover -s blueprints/application/backend/tests -p test_api.py",
-    "test:navigation": "node tests/blueprint-consumers/run-navigation.mjs"
+    "test:identity-lifecycle": "npm run test --workspace @forma/identity-lifecycle-proof",
+    "test:navigation": "node tests/blueprint-consumers/run-navigation.mjs",
+    "test:auth-presentation": "node tests/blueprint-consumers/run-auth-presentation.mjs"
   },
   "devDependencies": {
     "playwright": "1.64.1",

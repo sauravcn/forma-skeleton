@@ -1,0 +1,64 @@
+/* Parent controls semantic variables. No body/reset/global element selectors. */
+.forma-identity {
+  color: var(--app-text, inherit);
+  background: var(--app-surface, transparent);
+  font-family: var(--app-fontFamily, inherit);
+  border: 1px solid var(--app-border, currentColor);
+  border-radius: var(--app-radius, 0);
+  max-width: 58rem;
+  margin: 2rem auto;
+  overflow-wrap: anywhere;
+}
+.forma-identity--split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.forma-identity__panel,
+.forma-identity__aside {
+  padding: clamp(1rem, 4vw, 3rem);
+}
+.forma-identity__aside {
+  background: var(--app-soft, transparent);
+}
+.forma-identity__field {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+.forma-identity input {
+  font: inherit;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  color: inherit;
+  background: var(--app-background, transparent);
+  border: 1px solid var(--app-border, currentColor);
+  border-radius: var(--app-radius, 0);
+}
+.forma-identity button {
+  padding: 0.65rem 1rem;
+  margin: 0.3rem 0.3rem 0.3rem 0;
+  cursor: pointer;
+  color: var(--app-onAccent, inherit);
+  background: var(--app-accent, transparent);
+  border: 1px solid var(--app-border, currentColor);
+  border-radius: var(--app-radius, 0);
+  font: inherit;
+}
+.forma-identity button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+.forma-identity :focus-visible {
+  outline: 3px solid var(--app-highlight, currentColor);
+  outline-offset: 3px;
+}
+.forma-identity [role="alert"] {
+  color: var(--app-error, inherit);
+}
+@media (max-width: 40rem) {
+  .forma-identity--split {
+    grid-template-columns: 1fr;
+  }
+}
