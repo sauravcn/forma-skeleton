@@ -6,6 +6,7 @@ import { twoFactor } from "better-auth/plugins/two-factor";
 import { toNodeHandler } from "better-auth/node";
 import pg from "pg";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createAssurance } from "./assurance.mjs";
 
 export function createPasswordIdentity({
   databaseUrl,
@@ -16,6 +17,8 @@ export function createPasswordIdentity({
   onDeliveryFailure,
   verificationExpiresIn = 3600,
   enableTotp = false,
+  requireMfa = false,
+  organizationId,
 }) {
   if (typeof sendMail !== "function")
     throw new Error("Explicit mail transport is required");
@@ -23,6 +26,20 @@ export function createPasswordIdentity({
     throw new Error("Explicit PostgreSQL URL is required");
   if (typeof onDeliveryFailure !== "function")
     throw new Error("Explicit redacted delivery-failure reporter is required");
+  if (
+    typeof requireMfa !== "boolean" ||
+    (requireMfa &&
+      (!enableTotp ||
+        typeof organizationId !== "string" ||
+        !organizationId.trim())) ||
+    (organizationId !== undefined &&
+      (typeof organizationId !== "string" ||
+        !organizationId.trim() ||
+        organizationId.length > 200))
+  )
+    throw new Error(
+      "Explicit supported MFA policy and organization scope required",
+    );
   if (typeof enableTotp !== "boolean")
     throw new Error("enableTotp must be explicit boolean");
   const database = new URL(databaseUrl);
@@ -90,6 +107,17 @@ export function createPasswordIdentity({
         if (!state) throw new Error("Mail transport unavailable");
       }
     };
+  let auth;
+  const assurance = createAssurance({
+    pool,
+    lockPool,
+    requestState: mailState,
+    getAuth: () => auth,
+    appId,
+    organizationId,
+    enableTotp,
+    requireMfa,
+  });
   const options = {
     appName: appId,
     baseURL: publicOrigin,
@@ -126,6 +154,7 @@ export function createPasswordIdentity({
             }),
           ]
         : []),
+      assurance.plugin,
       username({
         minUsernameLength: 3,
         maxUsernameLength: 30,
@@ -136,27 +165,33 @@ export function createPasswordIdentity({
     socialProviders: {},
     account: { accountLinking: { enabled: false } },
     session: { cookieCache: { enabled: false }, expiresIn: 3600 },
-    advanced: { cookiePrefix: `${appId}-candidate` },
+    advanced: {
+      cookiePrefix: `${appId}-candidate`,
+      ipAddress: { ipAddressHeaders: ["x-forma-socket-ip"] },
+    },
     rateLimit: { enabled: true, storage: "database", window: 60, max: 100 },
   };
-  let auth;
   async function maintained(request) {
     const state = { failed: false };
     return mailState.run(state, async () => {
-      const response = await auth.handler(request);
-      const emailRequest = [
-        "/api/auth/request-password-reset",
-        "/api/auth/send-verification-email",
-      ].includes(new URL(request.url).pathname);
-      if (emailRequest && response.ok) {
-        const headers = new Headers(response.headers);
-        headers.delete("content-length");
-        return Response.json(
-          { status: true, message: "Check your inbox if eligible" },
-          { headers },
-        );
+      try {
+        const response = await auth.handler(request);
+        const emailRequest = [
+          "/api/auth/request-password-reset",
+          "/api/auth/send-verification-email",
+        ].includes(new URL(request.url).pathname);
+        if (emailRequest && response.ok) {
+          const headers = new Headers(response.headers);
+          headers.delete("content-length");
+          return Response.json(
+            { status: true, message: "Check your inbox if eligible" },
+            { headers },
+          );
+        }
+        return response;
+      } finally {
+        await assurance.release();
       }
-      return response;
     });
   }
   const guardedHandler = toNodeHandler(async (request) => {
@@ -261,6 +296,26 @@ export function createPasswordIdentity({
             { code: "VERIFIED_SESSION_REQUIRED" },
             { status: 401 },
           );
+        if (
+          [
+            "/api/auth/two-factor/disable",
+            "/api/auth/two-factor/generate-backup-codes",
+          ].includes(route) &&
+          !(await assurance.hasProof(session))
+        )
+          return Response.json(
+            { code: "CURRENT_MFA_REQUIRED" },
+            { status: 403 },
+          );
+        if (
+          route === "/api/auth/two-factor/get-totp-uri" &&
+          session.user.twoFactorEnabled &&
+          !(await assurance.hasProof(session))
+        )
+          return Response.json(
+            { code: "CURRENT_MFA_REQUIRED" },
+            { status: 403 },
+          );
         if (typeof body.password !== "string" || !body.password)
           return Response.json(
             { code: "CURRENT_PASSWORD_REQUIRED" },
@@ -319,10 +374,46 @@ export function createPasswordIdentity({
   return {
     pool,
     async initialize() {
+      const existingPolicy = await pool.query(
+        "SELECT to_regclass('forma_identity_policy') AS name",
+      );
+      if (existingPolicy.rows[0].name) {
+        const persisted = (
+          await pool.query(
+            "SELECT app_id,organization_id,require_mfa FROM forma_identity_policy WHERE singleton=TRUE",
+          )
+        ).rows[0];
+        if (
+          persisted &&
+          (persisted.app_id !== appId ||
+            persisted.organization_id !== (organizationId || "") ||
+            persisted.require_mfa !== requireMfa)
+        )
+          throw new Error("Persisted identity scope/security policy mismatch");
+      }
+      if (
+        !enableTotp &&
+        (
+          await pool.query(
+            "SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='user' AND column_name='twoFactorEnabled'",
+          )
+        ).rowCount &&
+        (
+          await pool.query(
+            'SELECT 1 FROM "user" WHERE "twoFactorEnabled"=TRUE LIMIT 1',
+          )
+        ).rowCount
+      )
+        throw new Error("Refusing enrolled MFA security downgrade");
       const { runMigrations } = await getMigrations(options);
       await runMigrations();
+      await assurance.initialize();
       auth ??= betterAuth(options);
     },
+    introspect: assurance.introspect,
+    setMfaPolicy: assurance.setMfaPolicy,
+    appId,
+    organizationId,
     get auth() {
       if (!auth) throw new Error("Initialize before serving");
       return auth;
@@ -351,6 +442,27 @@ export function createPasswordIdentity({
         res.end(JSON.stringify({ code: "TRUST_DEVICE_UNSUPPORTED" }));
         return;
       }
+      const peer = req.socket.remoteAddress;
+      if (!["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(peer)) {
+        res.writeHead(403, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ code: "SOCKET_PEER_UNSUPPORTED" }));
+        return;
+      }
+      for (const name of Object.keys(req.headers))
+        if (
+          name === "forwarded" ||
+          name.startsWith("x-forwarded-") ||
+          [
+            "x-real-ip",
+            "cf-connecting-ip",
+            "true-client-ip",
+            "fastly-client-ip",
+            "fly-client-ip",
+            "x-forma-socket-ip",
+          ].includes(name)
+        )
+          delete req.headers[name];
+      req.headers["x-forma-socket-ip"] = peer;
       return guardedHandler(req, res);
     },
     async close() {

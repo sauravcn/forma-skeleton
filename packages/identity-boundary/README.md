@@ -1,6 +1,6 @@
 # Non-shipped identity boundary proof — FORMA-0039
 
-This package is an isolated engineering fixture, not the generated app's login module. The public neutral blueprint still supports auth none only. It has not gained password, TOTP, recovery, OAuth, session-MFA assurance, production hosting or an authenticated-customer release. FORMA-0039 and the full identity/consumer stories remain open until their remaining lifecycle/assurance acceptance is met.
+This package is an isolated engineering fixture, not the generated app's login module. The public neutral blueprint still supports auth none only. The generated blueprint has not gained password, TOTP, recovery, OAuth, session-MFA assurance, production hosting or an authenticated-customer release. The separate private lifecycle package has actual bounded password/TOTP/session-assurance evidence, described below. FORMA-0039 and the full identity/consumer stories remain open until their remaining lifecycle/assurance acceptance is met.
 
 ## What this proves
 
@@ -47,4 +47,11 @@ Those targeted tests use synthetic HTTP peers to verify expiry status, exact-coo
 
 The test boundary assumes a trusted local OS/process environment and fixed loopback peers; it is not proof against a malicious local administrator or a production authenticated service-to-service network. Real deployment requires maintained transport/TLS and operational acceptance. Requests already authorized before a concurrent revocation are not retroactively undone; separate-domain/identity transactions are not claimed atomic.
 
-Still open: full maintained password/verification/reset and real mail delivery; TOTP/recovery/enrollment/step-up/trusted-device policy; session-bound MFA assurance; provider callbacks and local-MFA combinations; record/data adoption migrations; generated identity source/module configuration; production secrets, TLS, CSRF and rate-limit operations; full authenticated independent-consumer proof. None of those capabilities may be enabled in the blueprint manifest based only on this fixture.
+Still open for generated/customer acceptance: adoption of the separately tested private password/TOTP/session-assurance lifecycle; real mail delivery and operational recovery; trusted-device policy; provider callbacks and local-MFA combinations; record/data adoption migrations; generated identity source/module configuration; production secrets, TLS, CSRF and rate-limit operations; full authenticated independent-consumer proof. None of those capabilities may be enabled in the blueprint manifest based only on this fixture.
+
+
+## Explicit MFA-assurance consumer mode (FORMA-0043)
+
+The original Node fixture remains basic-only and all its regressions still run. The reusable Python transport additionally accepts trusted constructor `required_assurance="mfa-session-v1"` (or server environment `PROOF_REQUIRED_ASSURANCE=mfa-session-v1`). It rejects valid-but-insufficient basic assurance with 403 and malformed/unavailable identity with 503. The default minimum remains `basic-session-fixture` and also accepts stronger server-proven `mfa-session-v1`; an MFA minimum rejects basic assurance. No client header/body can override that expected minimum. MFA-mode health reports the narrow session-assurance enforcement, not a complete authentication product.
+
+The lifecycle package's real HTTP/PG tests mount this package's private `identityServer()` with lifecycle `introspect`, start the actual Python API in MFA mode and prove current session-ID/security/policy assurance alongside role/org/owner/Origin checks. See `../identity-lifecycle/README.md` and `test/assurance.test.mjs` there for exact implementation, evidence and operational limitations. This additive private-fixture integration does not enable a blueprint capability or create an owner database migration.

@@ -103,8 +103,13 @@ def handler(identity, records, public_origin):
                         200,
                         {
                             "mode": "non-shipped-session-boundary-proof",
-                            "assurance": "basic-session-fixture",
-                            "mfa_implemented": False,
+                            "assurance": identity.required_assurance,
+                            **(
+                                {"mfa_implemented": False}
+                                if identity.required_assurance
+                                == "basic-session-fixture"
+                                else {"session_assurance_enforced": True}
+                            ),
                         },
                     )
                 if self.path != "/api/records":
@@ -170,6 +175,7 @@ def main():
         os.environ["PROOF_APP_ID"],
         os.environ["PROOF_ORGANIZATION_ID"],
         os.environ["PROOF_SESSION_COOKIE_NAME"],
+        os.environ.get("PROOF_REQUIRED_ASSURANCE", "basic-session-fixture"),
     )
     records = Records(os.environ["PROOF_DATABASE_PATH"])
     server = ThreadingHTTPServer(
@@ -178,7 +184,7 @@ def main():
     )
     server.daemon_threads = True
     print(
-        f"Non-shipped basic-session fixture ready on loopback port {server.server_port}; MFA/login lifecycle not implemented.",
+        f"Non-shipped session fixture ready on loopback port {server.server_port}; required assurance {identity.required_assurance}.",
         flush=True,
     )
     try:

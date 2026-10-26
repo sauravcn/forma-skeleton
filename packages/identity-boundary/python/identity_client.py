@@ -20,7 +20,14 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class IdentityClient:
-    def __init__(self, url, app_id, organization_id, cookie_name):
+    def __init__(
+        self,
+        url,
+        app_id,
+        organization_id,
+        cookie_name,
+        required_assurance="basic-session-fixture",
+    ):
         parsed = urlsplit(url)
         if (
             parsed.scheme != "http"
@@ -41,6 +48,9 @@ class IdentityClient:
             r"[A-Za-z0-9_.-]{1,160}", cookie_name
         ):
             raise ValueError("Explicit maintained session cookie name is required")
+        if required_assurance not in ("basic-session-fixture", "mfa-session-v1"):
+            raise ValueError("Explicit supported server assurance policy is required")
+        self.required_assurance = required_assurance
         self.url, self.app_id, self.organization_id = url, app_id, organization_id
         self.cookie_name = cookie_name
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
@@ -116,9 +126,14 @@ class IdentityClient:
                 not isinstance(item, str) or item not in allowed for item in permissions
             )
             or len(set(permissions)) != len(permissions)
-            or principal["assurance"] != "basic-session-fixture"
+            or principal["assurance"] not in ("basic-session-fixture", "mfa-session-v1")
         ):
             raise Denied(503, "identity.error.unavailable")
+        if (
+            self.required_assurance == "mfa-session-v1"
+            and principal["assurance"] != "mfa-session-v1"
+        ):
+            raise Denied(403, "identity.error.forbidden")
         try:
             expiry = datetime.fromisoformat(
                 principal["expires_at"].replace("Z", "+00:00")

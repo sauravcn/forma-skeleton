@@ -222,7 +222,7 @@ test(
         await clearBudget();
         const verified = await post(
           "two-factor/verify-totp",
-          { code: await otp.totp() },
+          { code: await freshCode() },
           activeCookie,
         );
         assert.equal(verified.status, 200);
@@ -246,6 +246,17 @@ test(
       const cookie = cookieOf(result);
       assert.ok((await session(cookie)) === null);
       return cookie;
+    }
+    async function freshCode() {
+      const used = new Set(
+        (
+          await identity.pool.query("SELECT counter::text FROM forma_used_totp")
+        ).rows.map((row) => row.counter),
+      );
+      const current = Math.floor(Date.now() / 30000);
+      for (const counter of [current, current + 1, current - 1])
+        if (!used.has(String(counter))) return otp.hotp(counter);
+      throw new Error("No unused synthetic TOTP window step");
     }
     await t.test(
       "password first factor is not a usable session; TOTP binds challenge",
@@ -314,7 +325,7 @@ test(
         await clearBudget();
         const verified = await post(
           "two-factor/verify-totp",
-          { code: await otp.totp() },
+          { code: await freshCode() },
           cookie,
         );
         assert.equal(verified.status, 200);
@@ -459,11 +470,33 @@ test(
         await clearBudget();
         const correct = await post(
           "two-factor/verify-totp",
-          { code: await otp.totp() },
+          { code: await freshCode() },
           cookie,
         );
         assert.equal(correct.status, 200);
         assert.ok(await session(cookieOf(correct)));
+      },
+    );
+    await t.test(
+      "enrolled optional-MFA store refuses password-only restart",
+      async () => {
+        const candidate = createPasswordIdentity({
+          databaseUrl: identity.pool.options.connectionString,
+          secret: randomBytes(32).toString("hex"),
+          appId: "totp-proof",
+          publicOrigin: origin,
+          sendMail: async () => {},
+          onDeliveryFailure: async () => {},
+          enableTotp: false,
+        });
+        try {
+          await assert.rejects(
+            () => candidate.initialize(),
+            /enrolled MFA security downgrade/,
+          );
+        } finally {
+          await candidate.close();
+        }
       },
     );
     await t.test(
@@ -519,16 +552,23 @@ test(
           ).status,
           401,
         );
+        const recovered = await post(
+          "two-factor/verify-backup-code",
+          { code: replacement.backupCodes[0] },
+          cookie,
+        );
+        assert.equal(recovered.status, 200);
         assert.equal(
           (
             await post(
-              "two-factor/verify-backup-code",
-              { code: replacement.backupCodes[0] },
-              cookie,
+              "two-factor/disable",
+              { password: credentials.password },
+              activeCookie,
             )
           ).status,
-          200,
+          403,
         );
+        activeCookie = cookieOf(recovered);
         const disabled = await post(
           "two-factor/disable",
           { password: credentials.password },
