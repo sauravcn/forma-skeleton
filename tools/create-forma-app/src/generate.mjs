@@ -150,6 +150,8 @@ export async function planGeneration(config, destination, { bundle } = {}) {
     ["_gitignore", ".gitignore"],
     ["ENVIRONMENT.example", ".env.example"],
     ["THIRD_PARTY_NOTICES", "THIRD_PARTY_NOTICES"],
+    ["AGENTS.md", "AGENTS.md"],
+    ["contracts/records.openapi.json", "contracts/records.openapi.json"],
   ])
     add(
       target,

@@ -1,0 +1,323 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Public synthetic starter records API",
+    "version": "0.1.0",
+    "description": "Local development only; no sign-in, agent credential, tenant isolation, payment or live AI. Direct API calls without Origin are allowed in this public mode. Foreign write Origins are denied; this is not authentication. JSON duplicate keys, nonfinite numbers, NUL and invalid Unicode are rejected. Backend runtime validation is authoritative; schema is a machine-readable structural contract."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8765",
+      "description": "Local Python API; API_PORT may override. Frontend same-origin bridge bounds/sanitizes transport separately."
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getStarterHealth",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable error code; no local paths, SQL or credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/records": {
+      "get": {
+        "operationId": "listSyntheticRecords",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable error code; no local paths, SQL or credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSyntheticRecord",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Acknowledged result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable error code; no local paths, SQL or credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecord"
+              }
+            }
+          }
+        },
+        "x-max-body-bytes": 16384
+      }
+    },
+    "/api/records/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Positive SQLite signed64 identifier. Preserve identity; avoid lossy conversions for large values."
+        }
+      ],
+      "patch": {
+        "operationId": "transitionSyntheticRecord",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Stable error code; no local paths, SQL or credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale expected_revision or redundant status transition; no mutation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionRecord"
+              }
+            }
+          }
+        },
+        "x-max-body-bytes": 16384
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Record": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string",
+            "pattern": "^[^\\u0000\\uD800-\\uDFFF]*$",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "details": {
+            "type": "string",
+            "pattern": "^[^\\u0000\\uD800-\\uDFFF]*$",
+            "maxLength": 2000
+          },
+          "status": {
+            "enum": [
+              "todo",
+              "done"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "created_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+          },
+          "updated_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "details",
+          "status",
+          "revision",
+          "created_at",
+          "updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "CreateRecord": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "pattern": "^[^\\u0000\\uD800-\\uDFFF]*$",
+            "description": "Trimmed before the 1\u2013200 Unicode-character limit is applied. Whitespace-only values are rejected.",
+            "x-normalized-max-length": 200
+          },
+          "details": {
+            "type": "string",
+            "pattern": "^[^\\u0000\\uD800-\\uDFFF]*$",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionRecord": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "todo",
+              "done"
+            ]
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "status",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "RecordList": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            }
+          }
+        },
+        "required": [
+          "records"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ready"
+          },
+          "mode": {
+            "const": "public-synthetic"
+          },
+          "authentication": {
+            "const": "none"
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "authentication"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error_code": {
+            "enum": [
+              "records.error.invalid",
+              "records.error.notFound",
+              "records.error.stale",
+              "records.error.origin",
+              "records.error.request"
+            ]
+          },
+          "error_params": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error_code",
+          "error_params"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

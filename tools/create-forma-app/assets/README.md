@@ -28,3 +28,7 @@ The included `.env.example` documents only local launcher settings. The launcher
 Generation refuses any existing destination. It assembles in a sibling staging directory, exclusively reserves a new destination, transfers files and removes `.forma-generation.pending` only on success. The destination can briefly be visible as pending; this is not a portable whole-directory transaction. If interrupted, preserve/inspect the pending marker/output and create a new destination or perform deliberate recovery. Never delete an existing customized app to retry generation.
 
 The root launcher is included source, not an external service. A blueprint upgrade tool, real authentication and guided AI customization remain separate work. Retain THIRD_PARTY_NOTICES and upstream package notices when redistributing dependencies. Contact your seller for the actual source-use agreement; this development starter creates no purchase license.
+
+## Developer coding assistants
+
+AGENTS.md documents source ownership, extension locations, domain constraints and review commands for your chosen developer assistant. contracts/records.openapi.json describes the current public synthetic API; it does not create authenticated runtime-agent access or a guided customization service. No coding assistant is automatically running, and prompt-generated changes require developer review and actual tests.

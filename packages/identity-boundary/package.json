@@ -1,0 +1,17 @@
+{
+  "name": "@forma/identity-boundary-proof",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Non-shipped synthetic session-introspection proof, not a complete login module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+  },
+  "dependencies": {
+    "better-auth": "1.7.12",
+    "pg": "8.23.1"
+  }
+}

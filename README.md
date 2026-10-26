@@ -70,3 +70,7 @@ Run `npm run test:python-package` for an offline-installed wheel/SQL/console/res
 Still unfinished: real login/password/TOTP/recovery/social providers, protected identity/roles, safe upgrades, AI customization, purchase licensing, managed hosting and existing-app adoption. FORMA-0016 stays open. A local tarball is not a published npm release, commercial license or owner product acceptance.
 
 Rendered examples from the external generated child: [desktop](docs/screenshots/neutral-linen-sidebar.png) and [mobile](docs/screenshots/neutral-midnight-mobile.png). These are actual synthetic starter captures, not designs for the existing business apps.
+
+Developer-assistant guidance and a machine-readable public records API contract are delivered in generated AGENTS.md and contracts/records.openapi.json. They support reviewed developer customization; they do not start an agent or provide a hosted prompt service.
+
+The separate packages/identity-boundary engineering fixture exercises maintained PostgreSQL sessions and server-derived Python ownership with `npm run test:identity-boundary` (Docker and cached postgres:17-bookworm required). It is not bundled into generated apps and does not implement password/TOTP/provider lifecycle. See its README and the identity design for exact limits.

@@ -5,21 +5,25 @@
   "type": "module",
   "workspaces": [
     "packages/config",
-    "tools/create-forma-app"
+    "tools/create-forma-app",
+    "packages/identity-boundary"
   ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test packages/config/test/*.test.mjs && npm run test --workspace create-forma-app",
+    "test": "node --test packages/config/test/*.test.mjs && npm run test --workspace create-forma-app && npm run test:templates",
     "check:config": "node packages/config/src/check.mjs",
     "build:cli": "npm run build --workspace create-forma-app",
     "test:consumer": "node tests/blueprint-consumers/run-neutral.mjs",
     "test:visual": "node tests/blueprint-consumers/run-visual.mjs",
-    "test:python-package": "python3 tests/blueprint-consumers/verify-python-package.py"
+    "test:python-package": "python3 tests/blueprint-consumers/verify-python-package.py",
+    "test:identity-boundary": "npm run test --workspace @forma/identity-boundary-proof",
+    "test:templates": "node --test blueprints/application/frontend/test/*.test.mjs && python3 -m unittest discover -s blueprints/application/backend/tests -p test_api.py"
   },
   "devDependencies": {
     "playwright": "1.64.1",
-    "prettier": "3.6.2"
+    "prettier": "3.6.2",
+    "ajv": "8.20.0"
   }
 }

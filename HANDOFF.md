@@ -17,3 +17,11 @@ Root verified installed tarball through actual npm exec (including its .bin syml
 This proof does not close authenticated consumer story FORMA-0025, full presentation accessibility requirements, or epic FORMA-0016. Main promotion/remote verification is recorded in canonical ticket evidence; fetch actual tips.
 
 Additional packaging evidence: a built backend wheel installed offline into a fresh venv passed isolated Python imports, packaged migration inventory, console health/records and restart persistence. The source proof harness also compares equivalent generated inventories and delivered file hashes; this does not assert a filesystem access sandbox.
+
+## Follow-on generator and identity checkpoints
+
+Reviewed navigation manifest is merged at f89d1a1, with 18 frontend tests and six actual layout/theme renders plus changed-label/stable-route and full-shell replacement browser proofs. The generator now also ships developer AGENTS guidance and a public OpenAPI contract; actual health/record/list/error responses were validated against that delivered contract in a fresh external consumer. This is developer-assistant readiness, not a running agent or guided prompt service.
+
+The separate packages/identity-boundary prototype uses maintained Better Auth/PostgreSQL sessions and authoritative Python introspection. Codex and Shreesh independently passed its nine reported checks, including real disposable PostgreSQL and direct HTTP denial/ownership/revocation/failure cases. Prior PG-default, cookie-forwarding, expired-status and environment-proxy findings were fixed. It is not bundled into generated apps; full FORMA-0039 and login/MFA lifecycle remain open. No production login or MFA assurance is claimed.
+
+Normal npm test now includes config, CLI and both template regression suites. Explicit npm run test:identity-boundary requires Docker plus the cached PostgreSQL17 image and creates/removes only its own random synthetic fixture. Preserve other containers/databases. Read packages/identity-boundary/README.md before using it.

@@ -194,6 +194,22 @@ test("output includes complete declared source and verified app-local provenance
     ).includes("local source"),
     true,
   );
+  assert.match(
+    await fs.readFile(path.join(f.output, "AGENTS.md"), "utf8"),
+    /No coding agent is automatically installed or running/,
+  );
+  const api = JSON.parse(
+    await fs.readFile(
+      path.join(f.output, "contracts/records.openapi.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(api.openapi, "3.1.0");
+  assert.equal(
+    api.paths["/api/records/{id}"].patch.operationId,
+    "transitionSyntheticRecord",
+  );
+  assert.deepEqual(api.security, []);
   const manifest = JSON.parse(
     await fs.readFile(path.join(f.output, "SOURCE_MANIFEST.json"), "utf8"),
   );

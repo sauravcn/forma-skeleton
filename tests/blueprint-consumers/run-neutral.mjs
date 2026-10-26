@@ -1,5 +1,6 @@
 /** External installed-package proof. No application-repo or seller source imports. */
 import assert from "node:assert/strict";
+import Ajv from "ajv/dist/2020.js";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -255,12 +256,49 @@ try {
     "package-lock.json",
     ".env.example",
     "THIRD_PARTY_NOTICES",
+    "AGENTS.md",
+    "contracts/records.openapi.json",
     "scripts/run.mjs",
   ])
     assert.ok(
       inventory.files[required],
       required + " required delivered source",
     );
+  const apiContract = JSON.parse(
+    await fs.readFile(
+      path.join(application, "contracts/records.openapi.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(apiContract.openapi, "3.1.0");
+  assert.deepEqual(
+    apiContract.security,
+    [],
+    "public starter must not claim authenticated operations",
+  );
+  const definitions = JSON.parse(
+    JSON.stringify(apiContract.components.schemas).replaceAll(
+      "#/components/schemas/",
+      "#/$defs/",
+    ),
+  );
+  const ajv = new Ajv({ strict: false, allErrors: true });
+  const contractValidators = Object.fromEntries(
+    ["Health", "Record", "RecordList", "Error"].map((name) => [
+      name,
+      ajv.compile({ $defs: definitions, $ref: `#/$defs/${name}` }),
+    ]),
+  );
+  function matchesContract(name, value) {
+    const validate = contractValidators[name];
+    assert.equal(
+      validate(value),
+      true,
+      name +
+        " actual response matches delivered contract: " +
+        JSON.stringify(validate.errors),
+    );
+  }
   const before = await fs.readFile(
     path.join(application, "app.config.json"),
     "utf8",
@@ -297,12 +335,14 @@ try {
   await ready(`http://127.0.0.1:${webPort}/`, service);
   const health = await request(`http://127.0.0.1:${apiPort}/api/health`, "GET");
   assert.equal(health.status, 200);
+  matchesContract("Health", health.body);
   const base = `http://127.0.0.1:${webPort}/api/records`;
   const created = await request(base, "POST", {
     title: "Synthetic consumer record",
     details: "External package proof; no real customer data",
   });
   assert.equal(created.status, 201);
+  matchesContract("Record", created.body);
   const record = created.body.record || created.body;
   assert.equal(record.revision, 1);
   assert.equal(typeof record.id, "number");
@@ -311,11 +351,13 @@ try {
     expected_revision: 1,
   });
   assert.equal(updated.status, 200);
+  matchesContract("Record", updated.body);
   const stale = await request(`${base}/${record.id}`, "PATCH", {
     status: "todo",
     expected_revision: 1,
   });
   assert.equal(stale.status, 409);
+  matchesContract("Error", stale.body);
   const denied = await fetch(base, {
     method: "POST",
     headers: {
@@ -325,6 +367,7 @@ try {
     body: JSON.stringify({ title: "Must not create", details: "" }),
   });
   assert.equal(denied.status, 403);
+  matchesContract("Error", await denied.json());
   const html = await fetch(`http://127.0.0.1:${webPort}/`).then((r) =>
     r.text(),
   );
@@ -333,6 +376,7 @@ try {
   service = run("npm", ["start"], application, { background: true, extraEnv });
   await ready(`http://127.0.0.1:${webPort}/api/records`, service);
   const reloaded = await request(base, "GET");
+  matchesContract("RecordList", reloaded.body);
   const records = reloaded.body.records;
   assert.ok(
     records.some(
@@ -350,6 +394,7 @@ try {
     database,
     checks: [
       "installed tarball generation",
+      "delivered machine contract matches actual health/records/errors",
       "destination refusal",
       "reproducible delivered source hashes and required closure",
       "independent npm install/test/build/start",
