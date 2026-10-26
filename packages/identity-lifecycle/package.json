@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "description": "Non-shipped maintained password and verification lifecycle candidate",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test --test-concurrency=1 test/*.test.mjs"
   },
   "dependencies": {
     "better-auth": "1.7.12",
     "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@better-auth/utils": "0.5.0"
   }
 }

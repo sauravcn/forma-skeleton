@@ -2,6 +2,7 @@
 import { betterAuth } from "better-auth";
 import { getMigrations } from "better-auth/db/migration";
 import { username } from "better-auth/plugins/username";
+import { twoFactor } from "better-auth/plugins/two-factor";
 import { toNodeHandler } from "better-auth/node";
 import pg from "pg";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -14,6 +15,7 @@ export function createPasswordIdentity({
   sendMail,
   onDeliveryFailure,
   verificationExpiresIn = 3600,
+  enableTotp = false,
 }) {
   if (typeof sendMail !== "function")
     throw new Error("Explicit mail transport is required");
@@ -21,6 +23,8 @@ export function createPasswordIdentity({
     throw new Error("Explicit PostgreSQL URL is required");
   if (typeof onDeliveryFailure !== "function")
     throw new Error("Explicit redacted delivery-failure reporter is required");
+  if (typeof enableTotp !== "boolean")
+    throw new Error("enableTotp must be explicit boolean");
   const database = new URL(databaseUrl);
   if (
     !["postgres:", "postgresql:"].includes(database.protocol) ||
@@ -109,6 +113,19 @@ export function createPasswordIdentity({
       sendVerificationEmail: deliver("verification"),
     },
     plugins: [
+      ...(enableTotp
+        ? [
+            twoFactor({
+              issuer: appId,
+              skipVerificationOnEnable: false,
+              allowPasswordless: false,
+              backupCodeOptions: {
+                storeBackupCodes: "encrypted",
+                allowPasswordless: false,
+              },
+            }),
+          ]
+        : []),
       username({
         minUsernameLength: 3,
         maxUsernameLength: 30,
@@ -144,7 +161,23 @@ export function createPasswordIdentity({
   }
   const guardedHandler = toNodeHandler(async (request) => {
     const route = new URL(request.url).pathname;
-    if (request.method !== "POST" || route !== "/api/auth/sign-up/email")
+    const factorRoute = route.startsWith("/api/auth/two-factor/");
+    if (factorRoute && new URL(request.url).search)
+      return Response.json(
+        { code: "UNSUPPORTED_FACTOR_OPTION" },
+        { status: 400 },
+      );
+    if (
+      request.method !== "POST" ||
+      (route !== "/api/auth/sign-up/email" &&
+        !factorRoute &&
+        !(
+          enableTotp &&
+          ["/api/auth/sign-in/email", "/api/auth/sign-in/username"].includes(
+            route,
+          )
+        ))
+    )
       return maintained(request);
     const reader = request.body?.getReader();
     const chunks = [];
@@ -168,6 +201,79 @@ export function createPasswordIdentity({
       body = JSON.parse(text);
     } catch {
       return Response.json({ code: "INVALID_JSON" }, { status: 400 });
+    }
+    if (
+      enableTotp &&
+      body &&
+      typeof body === "object" &&
+      [
+        "trustDevice",
+        "skipVerification",
+        "skipVerificationOnEnable",
+        "twoFactorEnabled",
+        "disableSession",
+      ].some((key) => Object.hasOwn(body, key))
+    )
+      return Response.json(
+        { code: "UNSUPPORTED_FACTOR_OPTION" },
+        { status: 400 },
+      );
+    if (!factorRoute && route !== "/api/auth/sign-up/email")
+      return maintained(
+        new Request(request.url, {
+          method: request.method,
+          headers: request.headers,
+          body: text,
+        }),
+      );
+    if (factorRoute) {
+      const allowed = {
+        "/api/auth/two-factor/enable": ["password", "method"],
+        "/api/auth/two-factor/disable": ["password"],
+        "/api/auth/two-factor/get-totp-uri": ["password"],
+        "/api/auth/two-factor/generate-backup-codes": ["password"],
+        "/api/auth/two-factor/verify-totp": ["code"],
+        "/api/auth/two-factor/verify-backup-code": ["code"],
+      };
+      if (!enableTotp || !allowed[route])
+        return Response.json(
+          { code: "UNSUPPORTED_FACTOR_OPERATION" },
+          { status: 404 },
+        );
+      if (
+        !body ||
+        Array.isArray(body) ||
+        typeof body !== "object" ||
+        Object.keys(body).some((key) => !allowed[route].includes(key)) ||
+        (body.method !== undefined && body.method !== "totp")
+      )
+        return Response.json(
+          { code: "UNSUPPORTED_FACTOR_OPTION" },
+          { status: 400 },
+        );
+      if (allowed[route].includes("password")) {
+        const session = await auth.api.getSession({
+          headers: request.headers,
+          query: { disableCookieCache: true, disableRefresh: true },
+        });
+        if (!session?.user?.emailVerified)
+          return Response.json(
+            { code: "VERIFIED_SESSION_REQUIRED" },
+            { status: 401 },
+          );
+        if (typeof body.password !== "string" || !body.password)
+          return Response.json(
+            { code: "CURRENT_PASSWORD_REQUIRED" },
+            { status: 400 },
+          );
+      }
+      return maintained(
+        new Request(request.url, {
+          method: request.method,
+          headers: request.headers,
+          body: text,
+        }),
+      );
     }
     const email =
       typeof body?.email === "string" ? body.email.trim().toLowerCase() : null;
@@ -230,6 +336,19 @@ export function createPasswordIdentity({
       ) {
         res.writeHead(403, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ code: "ORIGIN_NOT_ALLOWED" }));
+        return;
+      }
+      if (
+        enableTotp &&
+        (req.headers.cookie || "")
+          .split(";")
+          .some(
+            (part) =>
+              part.trim().split("=")[0] === `${appId}-candidate.trust_device`,
+          )
+      ) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ code: "TRUST_DEVICE_UNSUPPORTED" }));
         return;
       }
       return guardedHandler(req, res);

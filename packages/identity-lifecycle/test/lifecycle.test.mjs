@@ -106,6 +106,7 @@ test(
       }
     }
     await identity.initialize();
+    assert.equal(identity.auth.api.enableTwoFactor, undefined);
     async function post(route, body, cookie) {
       return fetch(`${origin}/api/auth/${route}`, {
         method: "POST",
@@ -138,15 +139,15 @@ test(
       .getSetCookie()
       .find((value) => value.includes(".session_token="));
     assert.ok(sessionCookie);
-    assert.match(sessionCookie, /HttpOnly/i);
-    assert.match(sessionCookie, /SameSite=Lax/i);
+    assert.ok(/HttpOnly/i.test(sessionCookie));
+    assert.ok(/SameSite=Lax/i.test(sessionCookie));
     const cookie = signin.headers
       .getSetCookie()
       .map((v) => v.split(";")[0])
       .join("; ");
     assert.ok(cookie);
     const stored = await identity.pool.query("SELECT password FROM account");
-    assert.notEqual(stored.rows[0].password, credentials.password);
+    assert.ok(stored.rows[0].password !== credentials.password);
     assert.ok(stored.rows[0].password.length > 64);
     const context = await identity.auth.$context;
     assert.equal(
@@ -245,7 +246,7 @@ test(
     const sessionResponse = await fetch(`${origin}/api/auth/get-session`, {
       headers: { Cookie: cookie },
     });
-    assert.equal(await sessionResponse.json(), null);
+    assert.ok((await sessionResponse.json()) === null);
     const concurrent = await Promise.all(
       ["same_user", "SAME_USER"].map((username, index) =>
         post("sign-up/email", {
@@ -340,7 +341,7 @@ test(
           kind: "verification",
           code: "MAIL_TRANSPORT_FAILED",
         });
-        assert.equal(failed.headers.get("set-cookie"), null);
+        assert.ok(failed.headers.get("set-cookie") === null);
         const existingReset = await post("request-password-reset", {
           email: candidate.email,
           redirectTo: `${origin}/reset`,
@@ -420,7 +421,7 @@ test(
           signal: AbortSignal.timeout(5000),
         });
         assert.ok(replay.status < 400);
-        assert.equal(replay.headers.get("set-cookie"), null);
+        assert.ok(replay.headers.get("set-cookie") === null);
         assert.equal(
           (
             await identity.pool.query(
@@ -542,8 +543,8 @@ test(
         assert.equal(changed.status, 200);
         const changedCookie = cookies(changed);
         assert.ok(changedCookie);
-        assert.equal(await session(firstCookie), null);
-        assert.equal(await session(secondCookie), null);
+        assert.ok((await session(firstCookie)) === null);
+        assert.ok((await session(secondCookie)) === null);
         assert.ok(await session(changedCookie));
         assert.equal(
           (
@@ -565,7 +566,7 @@ test(
           200,
         );
         assert.ok(await session(changedCookie));
-        assert.equal(await session(cookies(another)), null);
+        assert.ok((await session(cookies(another))) === null);
         assert.equal((await post("revoke-other-sessions", {})).status, 401);
       },
     );
