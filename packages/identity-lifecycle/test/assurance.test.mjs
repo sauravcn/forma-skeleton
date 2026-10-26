@@ -296,7 +296,7 @@ test(
     }
     let otp, backupCodes;
     await t.test(
-      "unenrolled and old basic sessions cannot enter MFA-required domain",
+      "pending recovery cannot bypass TOTP confirmation; old basic sessions deny",
       async () => {
         assert.equal((await domain(oldCookie)).status, 403);
         assert.equal(
@@ -320,6 +320,37 @@ test(
         assert.equal(enabled.status, 200);
         const enrollment = await enabled.json();
         backupCodes = enrollment.backupCodes;
+        const pendingBefore = (
+          await identity.pool.query(
+            'SELECT "backupCodes",verified FROM "twoFactor" WHERE "userId"=$1',
+            [userId],
+          )
+        ).rows[0];
+        const premature = await post(
+          "two-factor/verify-backup-code",
+          { code: backupCodes[0] },
+          activeCookie,
+        );
+        assert.equal(premature.status, 403);
+        assert.ok(premature.headers.get("set-cookie") === null);
+        const pendingAfter = (
+          await identity.pool.query(
+            'SELECT "backupCodes",verified FROM "twoFactor" WHERE "userId"=$1',
+            [userId],
+          )
+        ).rows[0];
+        assert.ok(pendingBefore.backupCodes === pendingAfter.backupCodes);
+        assert.equal(pendingAfter.verified, false);
+        assert.equal(
+          (
+            await identity.pool.query(
+              "SELECT count(*)::int AS n FROM forma_session_assurance WHERE user_id=$1",
+              [userId],
+            )
+          ).rows[0].n,
+          0,
+        );
+        assert.equal((await domain(activeCookie)).status, 403);
         otp = createOTP(
           new TextDecoder().decode(
             base32.decode(

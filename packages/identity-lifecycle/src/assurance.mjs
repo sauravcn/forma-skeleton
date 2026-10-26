@@ -65,9 +65,10 @@ export function createAssurance({
       );
   }
   async function hasProof(session) {
-    if (!session?.session?.id || !session?.user?.emailVerified) return false;
+    if (!enableTotp || !session?.session?.id || !session?.user?.emailVerified)
+      return false;
     const result = await pool.query(
-      `SELECT 1 FROM forma_session_assurance a JOIN session s ON s.id=a.session_id JOIN forma_user_security u ON u.user_id=a.user_id CROSS JOIN forma_identity_policy p WHERE a.session_id=$1 AND a.user_id=$2 AND s."userId"=a.user_id AND s."expiresAt">NOW() AND a.user_epoch=u.epoch AND a.policy_epoch=p.epoch AND p.app_id=$3 AND p.organization_id=$4`,
+      `SELECT 1 FROM forma_session_assurance a JOIN session s ON s.id=a.session_id JOIN forma_user_security u ON u.user_id=a.user_id JOIN "user" confirmed_user ON confirmed_user.id=a.user_id AND confirmed_user."twoFactorEnabled"=TRUE JOIN "twoFactor" confirmed_factor ON confirmed_factor."userId"=a.user_id AND confirmed_factor.verified=TRUE CROSS JOIN forma_identity_policy p WHERE a.session_id=$1 AND a.user_id=$2 AND s."userId"=a.user_id AND s."expiresAt">NOW() AND a.user_epoch=u.epoch AND a.policy_epoch=p.epoch AND p.app_id=$3 AND p.organization_id=$4`,
       [session.session.id, session.user.id, appId, organizationId || ""],
     );
     return result.rowCount === 1;
@@ -303,6 +304,23 @@ export function createAssurance({
               counter: null,
               factorId: null,
             };
+            if (ctx.path === "/two-factor/verify-backup-code") {
+              const confirmed = (
+                await client.query(
+                  'SELECT f.verified,u."twoFactorEnabled" FROM "twoFactor" f JOIN "user" u ON u.id=f."userId" WHERE f."userId"=$1',
+                  [userId],
+                )
+              ).rows[0];
+              if (
+                confirmed?.verified !== true ||
+                confirmed.twoFactorEnabled !== true
+              )
+                throw new APIError("FORBIDDEN", {
+                  code: "CONFIRMED_FACTOR_REQUIRED",
+                  message:
+                    "Authenticator enrollment must be confirmed before recovery",
+                });
+            }
             if (ctx.path === "/two-factor/verify-totp") {
               const factor = (
                 await client.query(

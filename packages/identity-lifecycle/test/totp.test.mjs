@@ -191,6 +191,31 @@ test(
         const enrollment = await enabled.json();
         backupCodes = enrollment.backupCodes;
         assert.equal(backupCodes.length, 10);
+        const pendingCiphertext = (
+          await identity.pool.query('SELECT "backupCodes" FROM "twoFactor"')
+        ).rows[0].backupCodes;
+        assert.equal(
+          (
+            await post(
+              "two-factor/verify-backup-code",
+              { code: backupCodes[0] },
+              activeCookie,
+            )
+          ).status,
+          403,
+        );
+        assert.ok(
+          (await identity.pool.query('SELECT "backupCodes" FROM "twoFactor"'))
+            .rows[0].backupCodes === pendingCiphertext,
+        );
+        assert.equal(
+          (
+            await identity.pool.query(
+              "SELECT count(*)::int AS n FROM forma_session_assurance",
+            )
+          ).rows[0].n,
+          0,
+        );
         const encoded = new URL(enrollment.totpURI).searchParams.get("secret");
         const secret = new TextDecoder().decode(base32.decode(encoded));
         otp = createOTP(secret);
