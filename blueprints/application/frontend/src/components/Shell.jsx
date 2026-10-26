@@ -2,7 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Icon from "./Icon.jsx";
-import { navigationFor } from "../navigation.js";
+import {
+  navigationFor,
+  navigationTree,
+  navigationLabelKey,
+} from "../navigation.js";
 export default function Shell({
   config,
   page,
@@ -11,6 +15,7 @@ export default function Shell({
   connection,
   onRefresh,
   refreshing,
+  navigationContext = {},
 }) {
   const [open, setOpen] = useState(false),
     button = useRef(null),
@@ -25,18 +30,57 @@ export default function Shell({
     button.current?.focus();
   }
   function links(position) {
-    return navigationFor(config.navigation.layout, position).map((item) => (
-      <Link
-        key={item.id}
-        href={item.href}
-        aria-current={page === item.id ? "page" : undefined}
-        className={page === item.id ? "nav-link active" : "nav-link"}
-        onClick={() => setOpen(false)}
-      >
-        <Icon name={item.icon} />
-        <span>{i.t(item.labelKey)}</span>
-      </Link>
-    ));
+    const tree = navigationTree(
+      navigationFor(
+        config.navigation.layout,
+        position,
+        undefined,
+        navigationContext,
+      ),
+    );
+    function list(nodes, nested = false) {
+      return (
+        <ul
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            paddingInlineStart: nested ? 14 : 0,
+            ...(position === "top" && !nested
+              ? {
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 4,
+                }
+              : {}),
+          }}
+        >
+          {nodes.map((item) => (
+            <li
+              key={item.id}
+              style={{
+                margin: 0,
+                padding: 0,
+                marginBlockEnd: position === "top" ? 0 : 7,
+              }}
+            >
+              <Link
+                href={item.href}
+                aria-current={page === item.id ? "page" : undefined}
+                className={page === item.id ? "nav-link active" : "nav-link"}
+                onClick={() => setOpen(false)}
+              >
+                <Icon name={item.icon} />
+                <span>{i.t(item.labelKey)}</span>
+              </Link>
+              {item.children.length > 0 && list(item.children, true)}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return list(tree);
   }
   const brand = (
     <Link className="app-brand" href="/">
@@ -83,7 +127,7 @@ export default function Shell({
             <div className="breadcrumbs">
               <span>{config.name}</span>
               <span aria-hidden="true">/</span>
-              <strong>{i.t(`nav.${page}`)}</strong>
+              <strong>{i.t(navigationLabelKey(page))}</strong>
             </div>
           )}
           <nav

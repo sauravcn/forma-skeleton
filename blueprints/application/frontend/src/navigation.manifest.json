@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "overview",
+      "href": "/",
+      "labelKey": "nav.overview",
+      "icon": "overview",
+      "group": "main",
+      "order": 10,
+      "parent": null
+    },
+    {
+      "id": "records",
+      "href": "/records",
+      "labelKey": "nav.records",
+      "icon": "records",
+      "group": "main",
+      "order": 20,
+      "parent": null
+    },
+    {
+      "id": "configuration",
+      "href": "/configuration",
+      "labelKey": "nav.configuration",
+      "icon": "source",
+      "group": "resources",
+      "order": 30,
+      "parent": null
+    }
+  ]
+}

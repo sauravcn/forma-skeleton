@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forma.invalid/schemas/navigation.schema.json",
+  "title": "App-owned source navigation manifest",
+  "type": "object",
+  "required": ["schemaVersion", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "visibilityKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]*$",
+      "maxLength": 100
+    },
+    "visibilityKeys": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/visibilityKey" }
+    },
+    "visibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allPermissions": { "$ref": "#/$defs/visibilityKeys" },
+        "allFeatures": { "$ref": "#/$defs/visibilityKeys" }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "href",
+        "labelKey",
+        "icon",
+        "group",
+        "order",
+        "parent"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "href": {
+          "type": "string",
+          "pattern": "^/(?:[a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)*/?)?$",
+          "maxLength": 240
+        },
+        "labelKey": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9_.-]*$",
+          "maxLength": 120
+        },
+        "icon": { "enum": ["overview", "records", "source"] },
+        "group": { "enum": ["main", "resources"] },
+        "order": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "parent": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/id" }] },
+        "visibility": { "$ref": "#/$defs/visibility" }
+      }
+    }
+  }
+}

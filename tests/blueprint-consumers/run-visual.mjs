@@ -197,6 +197,41 @@ try {
       console.log(`Visual passed: ${preset}/${layout}`);
     }
   await stop();
+  // A label change in copied JSON changes both the menu and current breadcrumb.
+  const navigationFile = path.join(
+    application,
+    "frontend/src/navigation.manifest.json",
+  );
+  const previousNavigation = await fs.readFile(navigationFile, "utf8");
+  const customizedNavigation = JSON.parse(previousNavigation);
+  customizedNavigation.items.find((item) => item.id === "records").labelKey =
+    "app.workspace";
+  await fs.writeFile(
+    navigationFile,
+    JSON.stringify(customizedNavigation, null, 2) + "\n",
+  );
+  await command(["run", "build"]);
+  const navigationUrl = await start();
+  const navigationPage = await browser.newPage();
+  await navigationPage.goto(navigationUrl + "/records");
+  await navigationPage
+    .locator(".breadcrumbs strong")
+    .getByText("Workspace", { exact: true })
+    .waitFor();
+  await navigationPage
+    .getByRole("link", { name: "Workspace", exact: true })
+    .waitFor();
+  await navigationPage
+    .locator(".record-card")
+    .filter({ hasText: "Browser proof record" })
+    .waitFor();
+  await navigationPage.close();
+  await stop();
+  await fs.writeFile(navigationFile, previousNavigation);
+  results.push({
+    sourceNavigationLabelReplacement: true,
+    stableRecordRoute: true,
+  });
   // Prove a customer's trusted source can replace the shell's entire structure.
   const component = path.join(
     application,

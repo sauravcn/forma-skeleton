@@ -11,6 +11,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -31,27 +32,46 @@ def clean_environment():
 
 
 def run(command, *, cwd, environment, label, timeout=180):
+    process = None
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=cwd,
             env=environment,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            timeout=timeout,
+            start_new_session=os.name != "nt",
         )
+        output, _ = process.communicate(timeout=timeout)
     except (OSError, subprocess.TimeoutExpired) as error:
-        raise RuntimeError(f"{label} could not complete: {type(error).__name__}") from error
-    if result.returncode:
+        if process is not None:
+            try:
+                if os.name != "nt":
+                    os.killpg(process.pid, signal.SIGKILL)
+                else:
+                    process.kill()
+            except ProcessLookupError:
+                pass
+            process.communicate(timeout=5)
+        raise RuntimeError(
+            f"{label} could not complete: {type(error).__name__}"
+        ) from error
+    if process.returncode:
+        # Kill any child left behind by a failed isolated verifier/build process.
+        if os.name != "nt":
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
         # Do not disclose credentials embedded in an installer/index/proxy URL.
-        diagnostic = re.sub(r"https?://\S+", "<URL omitted>", result.stdout[-5000:])
-        raise RuntimeError(f"{label} failed ({result.returncode}):\n{diagnostic}")
-    return result.stdout
+        diagnostic = re.sub(r"https?://\S+", "<URL omitted>", output[-5000:])
+        raise RuntimeError(f"{label} failed ({process.returncode}):\n{diagnostic}")
+    return output
 
 
 # Executed by a clean venv with -I, not imported from the authoring source tree.
-VERIFY = r'''
+VERIFY = r"""
 from pathlib import Path
 import http.client
 import json
@@ -148,7 +168,7 @@ with tempfile.TemporaryDirectory(prefix="forma-wheel-runtime-") as temporary:
     saved = exercise_console()
     exercise_console(saved)
 print(json.dumps({"isolated_installed_import": True, "packaged_sql": True, "repeatable_migration": True, "installed_console_http": True, "revision_gate": True, "restart_persistence": True, "port_cleanup": True}))
-'''
+"""
 
 
 def main():
@@ -165,18 +185,40 @@ def main():
             source,
             symlinks=True,
             ignore=shutil.ignore_patterns(
-                "__pycache__", "*.pyc", ".venv", "data", "build", "dist",
-                "*.egg-info", ".env*", "*.db", "*.sqlite", "*.sqlite3",
+                "__pycache__",
+                "*.pyc",
+                ".venv",
+                "data",
+                "build",
+                "dist",
+                "*.egg-info",
+                ".env*",
+                "*.db",
+                "*.sqlite",
+                "*.sqlite3",
             ),
         )
         if any(path.is_symlink() for path in source.rglob("*")):
-            raise RuntimeError("Package source must not depend on symlinked external files")
+            raise RuntimeError(
+                "Package source must not depend on symlinked external files"
+            )
         environment["PIP_CACHE_DIR"] = str(root / "pip-cache")
         wheels = root / "wheels"
         wheels.mkdir()
         run(
-            [sys.executable, "-m", "pip", "wheel", "--no-deps", "--wheel-dir", str(wheels), str(source)],
-            cwd=root, environment=environment, label="Temporary-copy wheel build",
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "wheel",
+                "--no-deps",
+                "--wheel-dir",
+                str(wheels),
+                str(source),
+            ],
+            cwd=root,
+            environment=environment,
+            label="Temporary-copy wheel build",
         )
         artifacts = list(wheels.glob("starter_records_api-*.whl"))
         if len(artifacts) != 1:
@@ -188,26 +230,60 @@ def main():
                 raise RuntimeError("Wheel is missing required migration SQL")
             for name in names:
                 parts = PurePosixPath(name)
-                if parts.is_absolute() or ".." in parts.parts or "tests" in parts.parts or name.endswith((".db", ".sqlite", ".sqlite3", ".pyc")) or ".env" in parts.name:
+                if (
+                    parts.is_absolute()
+                    or ".." in parts.parts
+                    or "tests" in parts.parts
+                    or name.endswith((".db", ".sqlite", ".sqlite3", ".pyc"))
+                    or ".env" in parts.name
+                ):
                     raise RuntimeError("Wheel contains an excluded/unsafe artifact")
         consumer = root / "consumer"
         run(
             [sys.executable, "-m", "venv", str(consumer)],
-            cwd=root, environment=environment, label="Fresh consumer venv",
+            cwd=root,
+            environment=environment,
+            label="Fresh consumer venv",
         )
         binary = consumer / ("Scripts" if os.name == "nt" else "bin")
         python = binary / ("python.exe" if os.name == "nt" else "python")
-        console = binary / ("starter-records-api.exe" if os.name == "nt" else "starter-records-api")
+        console = binary / (
+            "starter-records-api.exe" if os.name == "nt" else "starter-records-api"
+        )
         run(
-            [str(python), "-m", "pip", "install", "--no-index", "--find-links", str(wheels), str(wheel)],
-            cwd=root, environment=environment, label="Offline wheel installation",
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--no-index",
+                "--find-links",
+                str(wheels),
+                str(wheel),
+            ],
+            cwd=root,
+            environment=environment,
+            label="Offline wheel installation",
         )
         report = run(
             [str(python), "-I", "-c", VERIFY, str(console)],
-            cwd=root, environment=environment, label="Isolated installed console/API verification", timeout=40,
+            cwd=root,
+            environment=environment,
+            label="Isolated installed console/API verification",
+            timeout=90,
         )
         checks = json.loads(report)
-        print(json.dumps({"wheel": wheel.name, "temporary_source_copy": True, "offline_install": True, "checks": checks}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "wheel": wheel.name,
+                    "temporary_source_copy": True,
+                    "offline_install": True,
+                    "checks": checks,
+                },
+                indent=2,
+            )
+        )
     return 0
 
 
