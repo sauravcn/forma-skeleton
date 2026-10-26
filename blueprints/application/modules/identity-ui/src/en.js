@@ -20,5 +20,5 @@ export const en = Object.freeze({
   error: "The request could not be completed. Try again.",
   invalid: "Complete the required fields.",
   accepted: "Check your inbox if eligible.",
-  provider: "Continue with",
+  provider: "Continue with {provider}",
 });

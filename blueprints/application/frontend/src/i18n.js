@@ -16,6 +16,7 @@ export function translate(
   );
 }
 export function localization(locale = "en-US", messages = english) {
+  validateCatalog(messages);
   return {
     t: (key, values) => translate(key, values, messages, locale),
     number: (value, options) =>
@@ -26,4 +27,45 @@ export function localization(locale = "en-US", messages = english) {
         timeStyle: "short",
       }).format(new Date(value)),
   };
+}
+
+// Validate catalog shape without treating translated text as a route/record identity.
+export function validateCatalog(messages, baseline = english) {
+  if (!messages || typeof messages !== "object" || Array.isArray(messages))
+    throw new Error("Invalid catalog");
+  const tokens = (text) =>
+    [...text.matchAll(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g)]
+      .map((m) => m[1])
+      .sort()
+      .join(",");
+  for (const [key, value] of Object.entries(messages)) {
+    if (!Object.hasOwn(baseline, key)) throw new Error("Unknown catalog key");
+    const original = baseline[key];
+    if (typeof original === "string") {
+      if (
+        typeof value !== "string" ||
+        !value.trim() ||
+        tokens(value) !== tokens(original)
+      )
+        throw new Error("Catalog placeholder mismatch");
+    } else {
+      if (
+        !value ||
+        typeof value !== "object" ||
+        Array.isArray(value) ||
+        typeof value.other !== "string"
+      )
+        throw new Error("Plural catalog requires other");
+      const allowed = new Set(["zero", "one", "two", "few", "many", "other"]);
+      for (const [category, text] of Object.entries(value))
+        if (
+          !allowed.has(category) ||
+          typeof text !== "string" ||
+          !text.trim() ||
+          tokens(text) !== tokens(original.other)
+        )
+          throw new Error("Plural placeholder mismatch");
+    }
+  }
+  return true;
 }

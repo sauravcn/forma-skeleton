@@ -11,7 +11,10 @@ export default function RecordForm({ i, busy, onCreate, error }) {
       await onCreate({ title: data.title.trim(), details: data.details.trim() })
     ) {
       form.reset();
-      title.current?.focus();
+      requestAnimationFrame(() => {
+        if (title.current?.isConnected && !title.current.matches(":disabled"))
+          title.current.focus();
+      });
     }
   }
   return (

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import { en } from "./en.js";
+import { identityMessages, identityText } from "./messages.js";
 import { defaultComponents } from "./components.jsx";
 
 const views = new Set([
@@ -54,7 +54,7 @@ export default function AuthPresentation({
     new Set(providers.map((p) => p.id)).size !== providers.length
   )
     throw new Error("Explicit provider callback contract required");
-  const t = { ...en, ...messages };
+  const t = identityMessages(messages);
   const { AuthLayout, AuthField, AuthButton } = {
     ...defaultComponents,
     ...components,
@@ -78,7 +78,10 @@ export default function AuthPresentation({
   async function submit(event) {
     event.preventDefault();
     if (pending) return;
-    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const submittedForm = event.currentTarget;
+    const submittedView = view;
+    const values = Object.fromEntries(new FormData(submittedForm));
+    let rejected = false;
     if (fields[view].some(([key]) => !String(values[key] || "").trim())) {
       setLocalError(true);
       return;
@@ -88,10 +91,23 @@ export default function AuthPresentation({
     try {
       await onSubmit({ view, values });
     } catch {
+      rejected = true;
       setLocalError(true);
     } finally {
-      // Never expose thrown backend details or credentials.
-      form.current?.reset();
+      // Clear secrets; preserve only nonsecret identifier on a failed same-view request.
+      submittedForm.reset();
+      if (rejected && submittedForm === form.current) {
+        const key =
+          submittedView === "login"
+            ? "identifier"
+            : submittedView === "resetRequest"
+              ? "email"
+              : null;
+        if (key && submittedForm.elements.namedItem(key))
+          submittedForm.elements.namedItem(key).value = String(
+            values[key] || "",
+          );
+      }
       setSubmitting(false);
     }
   }
@@ -147,7 +163,7 @@ export default function AuthPresentation({
             disabled={pending}
             onClick={() => providerAction(provider)}
           >
-            {t.provider} {provider.label}
+            {identityText(t.provider, { provider: provider.label })}
           </AuthButton>
         ))}
       {typeof onNavigate === "function" && (

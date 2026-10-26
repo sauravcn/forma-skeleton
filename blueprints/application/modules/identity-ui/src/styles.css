@@ -62,3 +62,23 @@
     grid-template-columns: 1fr;
   }
 }
+/* Text may grow or change direction without changing field identity. */
+.forma-identity__panel,
+.forma-identity__aside {
+  min-width: 0;
+}
+.forma-identity button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.forma-identity input {
+  text-align: start;
+}
+@media (prefers-reduced-motion: reduce) {
+  .forma-identity * {
+    scroll-behavior: auto;
+    animation: none;
+    transition: none;
+  }
+}

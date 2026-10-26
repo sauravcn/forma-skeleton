@@ -23,7 +23,8 @@
     "test:templates": "node --test blueprints/application/frontend/test/*.test.mjs && python3 -m unittest discover -s blueprints/application/backend/tests -p test_api.py",
     "test:identity-lifecycle": "npm run test --workspace @forma/identity-lifecycle-proof",
     "test:navigation": "node tests/blueprint-consumers/run-navigation.mjs",
-    "test:auth-presentation": "node tests/blueprint-consumers/run-auth-presentation.mjs"
+    "test:auth-presentation": "node tests/blueprint-consumers/run-auth-presentation.mjs",
+    "test:presentation-accessibility": "node tests/blueprint-consumers/run-presentation-accessibility.mjs"
   },
   "devDependencies": {
     "playwright": "1.64.1",

@@ -160,7 +160,25 @@ fieldset {
   color: inherit;
   border-radius: 7px;
   opacity: 0.7;
-  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.nav-link > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.nav-link > svg {
+  flex: 0 0 auto;
+}
+.app-sidebar nav,
+.mobile-navigation nav,
+.top-navigation,
+.app-sidebar nav li,
+.mobile-navigation nav li,
+.top-navigation li {
+  min-width: 0;
+  max-width: 100%;
 }
 .nav-link:hover {
   opacity: 1;
@@ -171,6 +189,11 @@ fieldset {
   background: #ffffff12;
   opacity: 1;
   box-shadow: inset 3px 0 var(--app-highlight);
+}
+[dir="rtl"] .app-sidebar .nav-link.active,
+[dir="rtl"] .mobile-navigation .nav-link.active {
+  box-shadow: none;
+  border-inline-start: 3px solid var(--app-highlight);
 }
 .sidebar-bottom {
   margin-block-start: auto;
