@@ -70,16 +70,185 @@
               "type": "string",
               "pattern": "^#[0-9a-fA-F]{6}$"
             },
+            "onAccent": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "soft": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "sidebar": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "sidebarText": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "highlight": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "error": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "success": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "warning": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "info": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "focus": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "navHover": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "navActive": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "overlay": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "fontFamily": {
+              "type": "string",
+              "pattern": "^(?:[iI][nN][hH][eE][rR][iI][tT]|(?!(?:.*\\b(?:[iI][nN][hH][eE][rR][iI][tT]|[iI][nN][iI][tT][iI][aA][lL]|[uU][nN][sS][eE][tT]|[rR][eE][vV][eE][rR][tT]|[rR][eE][vV][eE][rR][tT]-[lL][aA][yY][eE][rR])\\b))(?:[A-Za-z][A-Za-z0-9 -]*|'[A-Za-z][A-Za-z0-9 -]*')(?:, ?(?:[A-Za-z][A-Za-z0-9 -]*|'[A-Za-z][A-Za-z0-9 -]*'))*)$",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "headingFontFamily": {
+              "type": "string",
+              "pattern": "^(?:[iI][nN][hH][eE][rR][iI][tT]|(?!(?:.*\\b(?:[iI][nN][hH][eE][rR][iI][tT]|[iI][nN][iI][tT][iI][aA][lL]|[uU][nN][sS][eE][tT]|[rR][eE][vV][eE][rR][tT]|[rR][eE][vV][eE][rR][tT]-[lL][aA][yY][eE][rR])\\b))(?:[A-Za-z][A-Za-z0-9 -]*|'[A-Za-z][A-Za-z0-9 -]*')(?:, ?(?:[A-Za-z][A-Za-z0-9 -]*|'[A-Za-z][A-Za-z0-9 -]*'))*)$",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "controlFontFamily": {
+              "type": "string",
+              "pattern": "^(?:[iI][nN][hH][eE][rR][iI][tT]|(?!(?:.*\\b(?:[iI][nN][hH][eE][rR][iI][tT]|[iI][nN][iI][tT][iI][aA][lL]|[uU][nN][sS][eE][tT]|[rR][eE][vV][eE][rR][tT]|[rR][eE][vV][eE][rR][tT]-[lL][aA][yY][eE][rR])\\b))(?:[A-Za-z][A-Za-z0-9 -]*|'[A-Za-z][A-Za-z0-9 -]*')(?:, ?(?:[A-Za-z][A-Za-z0-9 -]*|'[A-Za-z][A-Za-z0-9 -]*'))*)$",
+              "minLength": 1,
+              "maxLength": 120
+            },
             "radius": {
               "type": "integer",
               "minimum": 0,
               "maximum": 32
             },
-            "fontFamily": {
-              "type": "string",
-              "pattern": "^[a-zA-Z0-9 ,'-]+$",
-              "minLength": 1,
-              "maxLength": 120
+            "controlRadius": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 32
+            },
+            "navRadius": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 32
+            },
+            "bodyFontSize": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 24
+            },
+            "controlFontSize": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 24
+            },
+            "buttonFontSize": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 24
+            },
+            "typeScale": {
+              "type": "number",
+              "minimum": 0.75,
+              "maximum": 1.5
+            },
+            "headingScale": {
+              "type": "number",
+              "minimum": 0.65,
+              "maximum": 1.5
+            },
+            "bodyLineHeight": {
+              "type": "number",
+              "minimum": 1.1,
+              "maximum": 2.2
+            },
+            "headingLineHeight": {
+              "type": "number",
+              "minimum": 1.1,
+              "maximum": 2
+            },
+            "spacingScale": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 1.5
+            },
+            "focusWidth": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            },
+            "focusOffset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "motionDuration": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            },
+            "navHoverOpacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "navActiveOpacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "overlayOpacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "pagePadding": {
+              "type": "integer",
+              "minimum": 12,
+              "maximum": 64
+            },
+            "mobilePagePadding": {
+              "type": "integer",
+              "minimum": 12,
+              "maximum": 40
+            },
+            "panelPadding": {
+              "type": "integer",
+              "minimum": 12,
+              "maximum": 48
+            },
+            "controlPaddingY": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 20
+            },
+            "controlPaddingX": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 28
             }
           },
           "required": [],

@@ -131,3 +131,72 @@ test("portable relative paths reject traversal, drive paths and reserved device 
     "frontend/src/components/index.jsx",
   );
 });
+
+test("semantic parent token registry matches generator schema and runtime validation", async () => {
+  const registry = JSON.parse(
+    fs.readFileSync(
+      new URL(
+        "../../../blueprints/application/frontend/src/theme-tokens.json",
+        import.meta.url,
+      ),
+    ),
+  );
+  const schema = JSON.parse(
+    fs.readFileSync(
+      new URL("../../../schemas/app-config.schema.json", import.meta.url),
+    ),
+  );
+  const { themeStyle, validateTheme } = await import(
+    "../../../blueprints/application/frontend/src/theme.js"
+  );
+  assert.deepEqual(
+    schema.properties.theme.properties.tokens.properties,
+    Object.fromEntries(
+      Object.entries(registry).map(([key, definition]) => [
+        key,
+        definition.schema,
+      ]),
+    ),
+  );
+  const config = defaultConfig();
+  config.theme.tokens = Object.fromEntries(
+    Object.entries(registry).map(([key, definition]) => [
+      key,
+      definition.default,
+    ]),
+  );
+  validateConfig(config, manifest());
+  validateTheme(config.theme);
+  assert.equal(themeStyle(config.theme)["--app-motionDuration"], "200ms");
+  for (const [key, definition] of Object.entries(registry)) {
+    for (const invalid of [
+      null,
+      {},
+      [],
+      definition.schema.type === "string"
+        ? "url(javascript:bad)"
+        : definition.schema.maximum + 1,
+      definition.schema.type === "string" ? "" : NaN,
+    ]) {
+      const bad = defaultConfig();
+      bad.theme.tokens = { [key]: invalid };
+      assert.throws(() => validateConfig(bad, manifest()), key);
+      assert.throws(() => themeStyle(bad.theme), key);
+    }
+  }
+  for (const tokens of [
+    { unknownToken: "red" },
+    { fontFamily: "Arial; color:red" },
+    { fontFamily: "INITIAL" },
+    { fontFamily: "UnSeT" },
+    { fontFamily: "Arial, INHERIT" },
+    { radius: -1 },
+    { motionDuration: Infinity },
+    { controlFontSize: 12.5 },
+  ]) {
+    const bad = defaultConfig();
+    bad.theme.tokens = tokens;
+    assert.throws(() => validateConfig(bad, manifest()));
+    assert.throws(() => themeStyle(bad.theme));
+  }
+});

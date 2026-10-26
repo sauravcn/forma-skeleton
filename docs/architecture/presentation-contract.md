@@ -12,23 +12,15 @@ The current component registry is `frontend/src/components/registry.jsx`; `Start
 
 1. The generator validates config against `schemas/app-config.schema.json` and the selected blueprint's supported capability matrix. Unknown config keys and unsupported capabilities fail before output; selected module/source closure is deterministic.
 2. `frontend/src/config.js` imports `../../app.config.json`, within the generated project root. This is app-owned source configuration, not a remote parent or browser-supplied object.
-3. `themeStyle` selects the `linen` or `midnight` preset, then shallow-merges `config.theme.tokens` over the selected preset without mutating it. An unknown preset fails. Radius becomes a pixel value; other values become `--app-<token>` custom properties.
+3. `themeStyle` selects the `linen` or `midnight` preset, then shallow-merges `config.theme.tokens` over the selected preset without mutating it. An unknown preset fails. Registry-controlled dimensions become pixel/millisecond values; all values become `--app-<token>` custom properties after validation.
 4. `app/layout.jsx` sets those variables on the generated application's body. Component CSS consumes/inherits them; a deliberate app-owned descendant variable/style override may specialize its own subtree through ordinary CSS rules. There is no implemented nested ThemeProvider/context or multiple-isolated-theme-instance API.
 5. Full replacement components may bring app-owned CSS/layout. Changing a trusted source registry binding and rebuilding replaces the actual structure. Neither a copied source file nor a configuration value is a permission grant.
 
-Current JSON overrides are exactly:
+The shipped `frontend/src/theme-tokens.json` is now the canonical semantic registry; the generator schema has exactly matching properties checked by tests. Parent overrides cover body/heading/control typography, semantic status/focus/navigation colors and opacity, surface/control/nav radii, spacing/density, focus geometry and motion. See [theme-contract.md](theme-contract.md) for precise ranges and precedence.
 
-| Token                 | Schema constraint                                              | Current use                                         |
-| --------------------- | -------------------------------------------------------------- | --------------------------------------------------- |
-| accent                | Six-digit hex color                                            | Actions, focus outlines and accents                 |
-| background / surface  | Six-digit hex colors                                           | Page background and component surfaces              |
-| text / muted / border | Six-digit hex colors                                           | Foreground, secondary text and boundaries           |
-| radius                | Integer 0–32                                                   | Panels and selected containers, converted to pixels |
-| fontFamily            | Conservative 1–120-character font-family string; no URL/script | Main body/control typography                        |
+Registry defaults merge with linen/midnight overrides, then the parent tokens. Runtime validation rejects unsupported keys/types/ranges/fonts/colors before emitting CSS variables; generator validation uses the same definitions. This is a bounded scalar interface, not arbitrary CSS or downloaded executable configuration. Theme validation does not certify contrast, font availability or the entire app/security configuration.
 
-The presets also contain onAccent, soft, sidebar, sidebarText, highlight and error colors. Those are currently source-level preset values, not additional accepted JSON overrides. Some typography, spacing, individual control radii, translucent colors and motion values remain explicit CSS values; e.g. title typography uses a serif declaration. Therefore the initial token interface is not a claim that every visual property is already configurable through JSON. Colors passing schema validation are not proof of adequate contrast.
-
-The complete follow-on contract must expose or document app-source replacement for all relevant typography, spacing, status/focus surfaces, radius, motion and layout decisions, while keeping a bounded versioned schema. Add new token keys through schema/source/tests rather than silently accepting arbitrary CSS. A generated config edited directly after generation is a trusted source change requiring validation/build/review; the browser does not re-run the authoring AJV validator or certify the edited theme.
+Structural grid tracks, sidebar widths, breakpoints, artwork and local hierarchy remain app-owned source/component replacements. Full replacement remains available when a finite theme object is insufficient; no private shared source edit is required. Two substantially different actual parent config fixtures verified inherited fonts/colors/radii/focus/spacing in shell, record controls and optional auth views, with independent dependency installation. Default six-layout/theme and RTL/long-label checks remain separate evidence.
 
 ## CSS scope and composition
 

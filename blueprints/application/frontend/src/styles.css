@@ -2,15 +2,15 @@
   box-sizing: border-box;
 }
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 body {
   margin: 0;
   background: var(--app-background);
   color: var(--app-text);
   font-family: var(--app-fontFamily);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--app-bodyFontSize);
+  line-height: var(--app-bodyLineHeight);
 }
 button,
 input,
@@ -46,8 +46,8 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 3px solid var(--app-accent);
-  outline-offset: 4px;
+  outline: var(--app-focusWidth) solid var(--app-focus);
+  outline-offset: var(--app-focusOffset);
 }
 h1,
 h2,
@@ -58,7 +58,8 @@ p {
 h1,
 h2,
 h3 {
-  line-height: 1.25;
+  line-height: var(--app-headingLineHeight);
+  font-family: var(--app-headingFontFamily);
 }
 button {
   border: 0;
@@ -88,10 +89,11 @@ fieldset {
   inset-block-start: -100px;
   inset-inline-start: 18px;
   z-index: 100;
-  padding: 12px 18px;
+  padding: calc(12px * var(--app-spacingScale))
+    calc(18px * var(--app-spacingScale));
   background: var(--app-accent);
   color: var(--app-onAccent);
-  border-radius: 8px;
+  border-radius: calc(var(--app-radius) * 0.5714285714285714);
 }
 .skip-link:focus {
   inset-block-start: 12px;
@@ -106,16 +108,17 @@ fieldset {
   width: 244px;
   background: var(--app-sidebar);
   color: var(--app-sidebarText);
-  padding: 32px 23px;
+  padding: calc(32px * var(--app-spacingScale))
+    calc(23px * var(--app-spacingScale));
   display: flex;
   flex-direction: column;
   z-index: 20;
 }
 .app-brand {
   display: flex;
-  gap: 11px;
+  gap: calc(11px * var(--app-spacingScale));
   align-items: center;
-  font-size: 18px;
+  font-size: calc(18px * var(--app-typeScale));
   font-weight: 600;
   letter-spacing: -0.5px;
   min-width: 0;
@@ -126,11 +129,11 @@ fieldset {
 }
 .app-brand small {
   display: block;
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   font-weight: 400;
   letter-spacing: 1.1px;
   opacity: 0.65;
-  margin-block-start: 3px;
+  margin-block-start: calc(3px * var(--app-spacingScale));
   text-transform: uppercase;
 }
 .brand-symbol {
@@ -144,21 +147,22 @@ fieldset {
   margin: 57px 12px 18px;
   text-transform: uppercase;
   letter-spacing: 1.8px;
-  font-size: 9px;
+  font-size: calc(9px * var(--app-typeScale));
   opacity: 0.5;
 }
 .app-sidebar nav {
   display: grid;
-  gap: 7px;
+  gap: calc(7px * var(--app-spacingScale));
 }
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  font-size: 13px;
+  gap: calc(12px * var(--app-spacingScale));
+  padding: calc(12px * var(--app-spacingScale))
+    calc(14px * var(--app-spacingScale));
+  font-size: calc(13px * var(--app-typeScale));
   color: inherit;
-  border-radius: 7px;
+  border-radius: calc(var(--app-radius) * 0.5);
   opacity: 0.7;
   min-width: 0;
   max-width: 100%;
@@ -182,11 +186,19 @@ fieldset {
 }
 .nav-link:hover {
   opacity: 1;
-  background: #ffffff0c;
+  background: color-mix(
+    in srgb,
+    var(--app-navHover) calc(var(--app-navHoverOpacity) * 100%),
+    transparent
+  );
 }
 .app-sidebar .nav-link.active,
 .mobile-navigation .nav-link.active {
-  background: #ffffff12;
+  background: color-mix(
+    in srgb,
+    var(--app-navActive) calc(var(--app-navActiveOpacity) * 100%),
+    transparent
+  );
   opacity: 1;
   box-shadow: inset 3px 0 var(--app-highlight);
 }
@@ -199,9 +211,9 @@ fieldset {
   margin-block-start: auto;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px;
-  font-size: 11px;
+  gap: calc(8px * var(--app-spacingScale));
+  padding: calc(14px * var(--app-spacingScale));
+  font-size: calc(11px * var(--app-typeScale));
   opacity: 0.65;
 }
 .sidebar-dot {
@@ -218,17 +230,18 @@ fieldset {
 .app-topbar {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: calc(20px * var(--app-spacingScale));
   min-height: 84px;
-  padding: 15px 40px;
+  padding: calc(15px * var(--app-spacingScale))
+    calc(40px * var(--app-spacingScale));
   border-block-end: 1px solid var(--app-border);
   background: var(--app-background);
 }
 .breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 11px;
+  gap: calc(16px * var(--app-spacingScale));
+  font-size: calc(11px * var(--app-typeScale));
 }
 .breadcrumbs > span {
   color: var(--app-muted);
@@ -238,13 +251,14 @@ fieldset {
 }
 .top-navigation {
   display: flex;
-  gap: 4px;
+  gap: calc(4px * var(--app-spacingScale));
   align-items: center;
   margin-inline-start: auto;
 }
 .top-navigation .nav-link {
-  font-size: 12px;
-  padding: 9px 13px;
+  font-size: calc(12px * var(--app-typeScale));
+  padding: calc(9px * var(--app-spacingScale))
+    calc(13px * var(--app-spacingScale));
   color: var(--app-muted);
 }
 .top-navigation .nav-link.active {
@@ -263,8 +277,8 @@ fieldset {
   margin-inline-start: auto;
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 10px;
+  gap: calc(7px * var(--app-spacingScale));
+  font-size: calc(10px * var(--app-typeScale));
   font-weight: 500;
   white-space: nowrap;
   color: var(--app-muted);
@@ -282,11 +296,11 @@ fieldset {
   background: var(--app-error);
 }
 .icon-button {
-  padding: 7px;
+  padding: calc(7px * var(--app-spacingScale));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: calc(var(--app-radius) * 0.5);
   background: transparent;
   color: inherit;
   min-width: 36px;
@@ -299,32 +313,32 @@ fieldset {
   display: none;
 }
 .app-body main {
-  padding: 40px;
+  padding: calc(40px * var(--app-spacingScale));
   max-width: 1500px;
   margin-inline: auto;
   outline: none;
 }
 .page-heading {
-  margin-block-end: 32px;
+  margin-block-end: calc(32px * var(--app-spacingScale));
   max-width: 800px;
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   letter-spacing: 2px;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--app-muted);
-  margin-block-end: 13px;
+  margin-block-end: calc(13px * var(--app-spacingScale));
 }
 .page-heading h1 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--app-headingFontFamily);
   font-weight: 400;
-  font-size: 40px;
+  font-size: calc(40px * var(--app-typeScale) * var(--app-headingScale));
   letter-spacing: -1.3px;
-  margin-block-end: 13px;
+  margin-block-end: calc(13px * var(--app-spacingScale));
 }
 .page-heading > p:last-child {
-  font-size: 13px;
+  font-size: calc(13px * var(--app-typeScale));
   color: var(--app-muted);
   line-height: 1.75;
   max-width: 590px;
@@ -332,24 +346,24 @@ fieldset {
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-block-end: 30px;
+  gap: calc(16px * var(--app-spacingScale));
+  margin-block-end: calc(30px * var(--app-spacingScale));
 }
 .metrics article {
   position: relative;
   background: var(--app-surface);
-  padding: 24px;
+  padding: calc(24px * var(--app-spacingScale));
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius);
   min-height: 150px;
 }
 .metrics article > p {
-  font-size: 11px;
+  font-size: calc(11px * var(--app-typeScale));
   color: var(--app-muted);
-  margin-block-end: 15px;
+  margin-block-end: calc(15px * var(--app-spacingScale));
 }
 .metrics article > strong {
-  font-size: 32px;
+  font-size: calc(32px * var(--app-typeScale));
   font-weight: 400;
   letter-spacing: -1px;
 }
@@ -369,22 +383,22 @@ fieldset {
 }
 .progress-track {
   height: 4px;
-  border-radius: 4px;
+  border-radius: calc(var(--app-radius) * 0.2857142857142857);
   background: var(--app-border);
   overflow: hidden;
-  margin-block-start: 14px;
+  margin-block-start: calc(14px * var(--app-spacingScale));
 }
 .progress-track > span {
   height: 100%;
   background: var(--app-accent);
   display: block;
-  border-radius: 4px;
-  transition: width 0.2s ease;
+  border-radius: calc(var(--app-radius) * 0.2857142857142857);
+  transition: width var(--app-motionDuration) ease;
 }
 .overview-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 290px;
-  gap: 24px;
+  gap: calc(24px * var(--app-spacingScale));
   align-items: stretch;
 }
 .panel {
@@ -394,32 +408,32 @@ fieldset {
   overflow: hidden;
 }
 .panel-header {
-  padding: 24px;
+  padding: calc(24px * var(--app-spacingScale));
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: calc(18px * var(--app-spacingScale));
   align-items: center;
   border-block-end: 1px solid var(--app-border);
 }
 .panel-header h2 {
-  font-size: 17px;
+  font-size: calc(17px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 500;
 }
 .panel-header p {
   color: var(--app-muted);
-  font-size: 11px;
-  margin-block-start: 5px;
+  font-size: calc(11px * var(--app-typeScale));
+  margin-block-start: calc(5px * var(--app-spacingScale));
 }
 .text-button {
   display: inline-flex;
-  gap: 8px;
+  gap: calc(8px * var(--app-spacingScale));
   align-items: center;
   justify-content: center;
   color: var(--app-accent);
   background: transparent;
-  font-size: 11px;
+  font-size: calc(11px * var(--app-typeScale));
   white-space: nowrap;
-  padding: 5px 0;
+  padding: calc(5px * var(--app-spacingScale)) 0;
   font-weight: 600;
 }
 .text-button:hover {
@@ -429,7 +443,8 @@ fieldset {
 .source-card {
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius);
-  padding: 30px 28px;
+  padding: calc(30px * var(--app-spacingScale))
+    calc(28px * var(--app-spacingScale));
   background: var(--app-soft);
   display: flex;
   flex-direction: column;
@@ -444,7 +459,7 @@ fieldset {
   display: grid;
   place-items: center;
   color: var(--app-accent);
-  margin-block-end: 26px;
+  margin-block-end: calc(26px * var(--app-spacingScale));
   position: relative;
 }
 .source-orbit:before {
@@ -455,21 +470,21 @@ fieldset {
   border-radius: 50%;
 }
 .source-card > .eyebrow {
-  font-size: 8px;
+  font-size: calc(8px * var(--app-typeScale));
   letter-spacing: 1.7px;
 }
 .source-card h2 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--app-headingFontFamily);
   font-weight: 400;
-  font-size: 26px;
+  font-size: calc(26px * var(--app-typeScale) * var(--app-headingScale));
   letter-spacing: -0.6px;
-  margin-block-end: 14px;
+  margin-block-end: calc(14px * var(--app-spacingScale));
 }
 .source-card > p:not(.eyebrow) {
-  font-size: 12px;
+  font-size: calc(12px * var(--app-typeScale));
   color: var(--app-muted);
   line-height: 1.85;
-  margin-block-end: 20px;
+  margin-block-end: calc(20px * var(--app-spacingScale));
 }
 .source-card > .text-button {
   margin-block-start: auto;
@@ -477,8 +492,9 @@ fieldset {
 .record-card {
   display: flex;
   align-items: flex-start;
-  gap: 15px;
-  padding: 23px 24px;
+  gap: calc(15px * var(--app-spacingScale));
+  padding: calc(23px * var(--app-spacingScale))
+    calc(24px * var(--app-spacingScale));
   border-block-end: 1px solid var(--app-border);
 }
 .record-card:last-child {
@@ -491,7 +507,7 @@ fieldset {
   height: 36px;
   background: var(--app-soft);
   color: var(--app-muted);
-  border-radius: 8px;
+  border-radius: calc(var(--app-radius) * 0.5714285714285714);
   flex-shrink: 0;
 }
 .record-done .record-symbol {
@@ -507,19 +523,20 @@ fieldset {
 }
 .record-title-row {
   display: flex;
-  gap: 12px;
+  gap: calc(12px * var(--app-spacingScale));
   justify-content: space-between;
   align-items: center;
 }
 .record-title-row h3 {
-  font-size: 13px;
+  font-size: calc(13px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 .record-status {
-  font-size: 8px;
-  padding: 3px 7px;
-  border-radius: 4px;
+  font-size: calc(8px * var(--app-typeScale));
+  padding: calc(3px * var(--app-spacingScale))
+    calc(7px * var(--app-spacingScale));
+  border-radius: calc(var(--app-radius) * 0.2857142857142857);
   white-space: nowrap;
   background: var(--app-soft);
   color: var(--app-muted);
@@ -530,20 +547,20 @@ fieldset {
   font-weight: 600;
 }
 .record-details {
-  font-size: 12px;
+  font-size: calc(12px * var(--app-typeScale));
   color: var(--app-muted);
   line-height: 1.7;
-  margin-block-start: 7px;
+  margin-block-start: calc(7px * var(--app-spacingScale));
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .record-meta {
-  font-size: 9px;
+  font-size: calc(9px * var(--app-typeScale));
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: calc(12px * var(--app-spacingScale));
   color: var(--app-muted);
-  margin-block-start: 10px;
+  margin-block-start: calc(10px * var(--app-spacingScale));
 }
 .record-card > .text-button {
   align-self: center;
@@ -551,7 +568,8 @@ fieldset {
 }
 .empty-state {
   text-align: center;
-  padding: 48px 28px;
+  padding: calc(48px * var(--app-spacingScale))
+    calc(28px * var(--app-spacingScale));
   color: var(--app-muted);
 }
 .empty-state > span {
@@ -564,31 +582,33 @@ fieldset {
   margin: 0 auto 17px;
 }
 .empty-state h3 {
-  font-size: 14px;
+  font-size: calc(14px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 500;
   color: var(--app-text);
-  margin-block-end: 9px;
+  margin-block-end: calc(9px * var(--app-spacingScale));
 }
 .empty-state p {
-  font-size: 11px;
+  font-size: calc(11px * var(--app-typeScale));
   line-height: 1.8;
   max-width: 330px;
   margin-inline: auto;
 }
 .loading-state {
-  padding: 36px 24px;
+  padding: calc(36px * var(--app-spacingScale))
+    calc(24px * var(--app-spacingScale));
   color: var(--app-muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--app-typeScale));
   text-align: center;
 }
 .customization-banner {
   display: flex;
-  gap: 18px;
+  gap: calc(18px * var(--app-spacingScale));
   align-items: flex-start;
-  margin-block-start: 24px;
+  margin-block-start: calc(24px * var(--app-spacingScale));
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius);
-  padding: 24px 27px;
+  padding: calc(24px * var(--app-spacingScale))
+    calc(27px * var(--app-spacingScale));
 }
 .section-icon {
   display: grid;
@@ -597,16 +617,16 @@ fieldset {
   width: 36px;
   height: 36px;
   border: 1px solid var(--app-border);
-  border-radius: 9px;
+  border-radius: calc(var(--app-radius) * 0.6428571428571429);
   color: var(--app-accent);
 }
 .customization-banner h2 {
-  font-size: 14px;
+  font-size: calc(14px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 500;
   margin: 1px 0 8px;
 }
 .customization-banner p {
-  font-size: 11px;
+  font-size: calc(11px * var(--app-typeScale));
   color: var(--app-muted);
   line-height: 1.8;
   max-width: 750px;
@@ -614,74 +634,76 @@ fieldset {
 .app-footer {
   max-width: 1500px;
   margin: 20px auto 0;
-  padding: 24px 40px;
+  padding: calc(24px * var(--app-spacingScale))
+    calc(40px * var(--app-spacingScale));
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  gap: calc(20px * var(--app-spacingScale));
   color: var(--app-muted);
-  font-size: 9px;
+  font-size: calc(9px * var(--app-typeScale));
 }
 .app-footer > span:first-child {
   text-transform: uppercase;
   letter-spacing: 1.7px;
-  font-size: 8px;
+  font-size: calc(8px * var(--app-typeScale));
 }
 .development-notice {
   position: fixed;
   inset-block-end: 0;
   inset-inline: 244px 0;
   z-index: 10;
-  padding: 10px 25px;
+  padding: calc(10px * var(--app-spacingScale))
+    calc(25px * var(--app-spacingScale));
   background: var(--app-surface);
   color: var(--app-muted);
   border-block-start: 1px solid var(--app-border);
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   text-align: center;
   line-height: 1.5;
 }
 .records-grid {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 25px;
+  gap: calc(25px * var(--app-spacingScale));
   align-items: start;
 }
 .record-form-panel {
-  padding: 24px;
+  padding: calc(24px * var(--app-spacingScale));
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius);
   background: var(--app-surface);
 }
 .section-heading {
   display: flex;
-  gap: 12px;
+  gap: calc(12px * var(--app-spacingScale));
   align-items: flex-start;
-  margin-block-end: 25px;
+  margin-block-end: calc(25px * var(--app-spacingScale));
 }
 .section-heading h2 {
-  font-size: 16px;
+  font-size: calc(16px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 500;
-  margin-block-start: 1px;
+  margin-block-start: calc(1px * var(--app-spacingScale));
 }
 .section-heading p {
   color: var(--app-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   line-height: 1.8;
-  margin-block-start: 7px;
+  margin-block-start: calc(7px * var(--app-spacingScale));
 }
 .field {
   display: block;
-  margin-block-end: 19px;
+  margin-block-end: calc(19px * var(--app-spacingScale));
 }
 .field > span {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  font-size: 11px;
-  margin-block-end: 8px;
+  gap: calc(12px * var(--app-spacingScale));
+  font-size: calc(11px * var(--app-typeScale));
+  margin-block-end: calc(8px * var(--app-spacingScale));
   font-weight: 500;
 }
 .field small {
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   font-weight: 400;
   color: var(--app-muted);
 }
@@ -689,12 +711,13 @@ fieldset {
 .field textarea {
   width: 100%;
   border: 1px solid var(--app-border);
-  border-radius: 6px;
+  border-radius: calc(var(--app-radius) * 0.42857142857142855);
   background: var(--app-background);
   color: var(--app-text);
-  padding: 10px 11px;
-  font-size: 12px;
-  transition: border-color 0.15s;
+  padding: calc(10px * var(--app-spacingScale))
+    calc(11px * var(--app-spacingScale));
+  font-size: calc(12px * var(--app-typeScale));
+  transition: border-color var(--app-motionDuration);
   resize: vertical;
 }
 .field input:focus,
@@ -705,18 +728,19 @@ fieldset {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: calc(9px * var(--app-spacingScale));
   background: var(--app-accent);
   color: var(--app-onAccent);
-  border-radius: 7px;
+  border-radius: calc(var(--app-radius) * 0.5);
   min-height: 41px;
-  font-size: 11px;
-  padding: 11px 18px;
+  font-size: calc(11px * var(--app-typeScale));
+  padding: calc(11px * var(--app-spacingScale))
+    calc(18px * var(--app-spacingScale));
   font-weight: 500;
 }
 .record-form-panel .primary-button {
   width: 100%;
-  margin-block-start: 3px;
+  margin-block-start: calc(3px * var(--app-spacingScale));
 }
 .primary-button svg {
   width: 15px;
@@ -726,85 +750,88 @@ fieldset {
   background: var(--app-background);
   border: 1px solid var(--app-border);
   color: var(--app-text);
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 10px;
+  border-radius: calc(var(--app-radius) * 0.42857142857142855);
+  padding: calc(8px * var(--app-spacingScale))
+    calc(10px * var(--app-spacingScale));
+  font-size: calc(10px * var(--app-typeScale));
 }
 .feedback {
-  padding: 14px 18px;
-  margin-block-end: 22px;
+  padding: calc(14px * var(--app-spacingScale))
+    calc(18px * var(--app-spacingScale));
+  margin-block-end: calc(22px * var(--app-spacingScale));
   border: 1px solid var(--app-border);
   border-inline-start: 3px solid currentColor;
-  border-radius: 7px;
-  font-size: 12px;
+  border-radius: calc(var(--app-radius) * 0.5);
+  font-size: calc(12px * var(--app-typeScale));
   background: var(--app-surface);
 }
 .error-feedback {
   color: var(--app-error);
 }
 .success-feedback {
-  color: var(--app-accent);
+  color: var(--app-success);
 }
 .guide-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
-  gap: 24px;
+  gap: calc(24px * var(--app-spacingScale));
   align-items: start;
 }
 .guide-panel > article {
   display: flex;
-  gap: 18px;
-  padding: 27px;
+  gap: calc(18px * var(--app-spacingScale));
+  padding: calc(27px * var(--app-spacingScale));
   border-block-end: 1px solid var(--app-border);
 }
 .guide-panel > article:last-child {
   border: 0;
 }
 .guide-panel h2 {
-  font-size: 16px;
+  font-size: calc(16px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 500;
-  margin-block-end: 10px;
+  margin-block-end: calc(10px * var(--app-spacingScale));
 }
 .guide-panel p {
-  font-size: 12px;
+  font-size: calc(12px * var(--app-typeScale));
   color: var(--app-muted);
   line-height: 1.85;
   max-width: 650px;
 }
 .guide-panel code {
   display: inline-block;
-  margin-block-start: 14px;
+  margin-block-start: calc(14px * var(--app-spacingScale));
   background: var(--app-soft);
-  padding: 6px 9px;
+  padding: calc(6px * var(--app-spacingScale))
+    calc(9px * var(--app-spacingScale));
   color: var(--app-text);
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   overflow-wrap: anywhere;
   max-width: 100%;
 }
 .settings-panel {
-  padding: 27px;
+  padding: calc(27px * var(--app-spacingScale));
 }
 .settings-panel h2 {
-  font-size: 17px;
+  font-size: calc(17px * var(--app-typeScale) * var(--app-headingScale));
   font-weight: 500;
-  margin-block-end: 25px;
+  margin-block-end: calc(25px * var(--app-spacingScale));
 }
 .settings-panel dl {
   margin: 0;
 }
 .settings-panel dl > div {
-  margin-block-end: 23px;
+  margin-block-end: calc(23px * var(--app-spacingScale));
 }
 .settings-panel dl > div:last-child {
   margin: 0;
 }
 .settings-panel dt {
-  font-size: 10px;
+  font-size: calc(10px * var(--app-typeScale));
   color: var(--app-muted);
-  margin-block-end: 5px;
+  margin-block-end: calc(5px * var(--app-spacingScale));
 }
 .settings-panel dd {
-  font-size: 12px;
+  font-size: calc(12px * var(--app-typeScale));
   margin: 0;
 }
 .layout-top .app-body {
@@ -823,7 +850,7 @@ fieldset {
   color: var(--app-accent);
 }
 .layout-top .app-brand small {
-  font-size: 8px;
+  font-size: calc(8px * var(--app-typeScale));
 }
 .layout-top .top-navigation {
   margin-inline-start: 0;
@@ -835,29 +862,37 @@ fieldset {
   background: var(--app-sidebar);
   color: var(--app-sidebarText);
   border: 0;
-  padding: 23px;
+  padding: calc(23px * var(--app-spacingScale));
   width: min(360px, calc(100vw - 30px));
-  border-radius: 14px;
+  border-radius: calc(var(--app-radius) * 1);
 }
 .mobile-navigation::backdrop {
-  background: #0008;
+  background: color-mix(
+    in srgb,
+    var(--app-overlay) calc(var(--app-overlayOpacity) * 100%),
+    transparent
+  );
 }
 .mobile-navigation-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-block-end: 25px;
+  gap: calc(10px * var(--app-spacingScale));
+  margin-block-end: calc(25px * var(--app-spacingScale));
 }
 .mobile-navigation nav {
   display: grid;
-  gap: 8px;
+  gap: calc(8px * var(--app-spacingScale));
 }
 .mobile-navigation .icon-button:hover {
-  background: #ffffff12;
+  background: color-mix(
+    in srgb,
+    var(--app-navActive) calc(var(--app-navActiveOpacity) * 100%),
+    transparent
+  );
 }
 .mobile-notice {
-  font-size: 11px;
+  font-size: calc(11px * var(--app-typeScale));
   line-height: 1.8;
   opacity: 0.7;
   margin: 28px 8px 5px;
@@ -867,10 +902,10 @@ fieldset {
     padding-block-start: 52px;
   }
   .page-heading {
-    margin-block-end: 42px;
+    margin-block-end: calc(42px * var(--app-spacingScale));
   }
   .page-heading h1 {
-    font-size: 45px;
+    font-size: calc(45px * var(--app-typeScale) * var(--app-headingScale));
   }
 }
 @media (max-width: 1250px) {
@@ -885,32 +920,34 @@ fieldset {
     inset-inline-start: 218px;
   }
   .app-body main {
-    padding: 30px;
+    padding: calc(30px * var(--app-spacingScale));
   }
   .app-topbar {
     padding-inline: 30px;
   }
   .overview-grid {
     grid-template-columns: minmax(0, 1fr) 255px;
-    gap: 18px;
+    gap: calc(18px * var(--app-spacingScale));
   }
   .records-grid {
     grid-template-columns: 280px minmax(0, 1fr);
-    gap: 20px;
+    gap: calc(20px * var(--app-spacingScale));
   }
   .record-card {
-    padding: 21px 20px;
+    padding: calc(21px * var(--app-spacingScale))
+      calc(20px * var(--app-spacingScale));
     flex-wrap: wrap;
   }
   .record-card > .text-button {
     margin-inline-start: 49px;
-    margin-block-start: 3px;
+    margin-block-start: calc(3px * var(--app-spacingScale));
   }
   .metrics {
-    gap: 12px;
+    gap: calc(12px * var(--app-spacingScale));
   }
   .metrics article {
-    padding: 21px 18px;
+    padding: calc(21px * var(--app-spacingScale))
+      calc(18px * var(--app-spacingScale));
   }
   .metric-icon {
     display: none;
@@ -919,7 +956,7 @@ fieldset {
     grid-template-columns: minmax(0, 1fr) 260px;
   }
   .connection {
-    font-size: 9px;
+    font-size: calc(9px * var(--app-typeScale));
   }
 }
 @media (max-width: 1000px) {
@@ -933,11 +970,11 @@ fieldset {
     inset-inline-start: 200px;
   }
   .app-topbar {
-    gap: 12px;
+    gap: calc(12px * var(--app-spacingScale));
     padding-inline: 24px;
   }
   .breadcrumbs {
-    gap: 10px;
+    gap: calc(10px * var(--app-spacingScale));
   }
   .overview-grid,
   .guide-grid {
@@ -954,13 +991,13 @@ fieldset {
     inset-block-start: 55px;
   }
   .source-card h2 {
-    font-size: 25px;
+    font-size: calc(25px * var(--app-typeScale) * var(--app-headingScale));
   }
   .source-card p {
     max-width: 400px;
   }
   .source-card .text-button {
-    margin-block-start: 10px;
+    margin-block-start: calc(10px * var(--app-spacingScale));
   }
   .records-grid {
     grid-template-columns: 1fr;
@@ -968,7 +1005,7 @@ fieldset {
   .record-form-panel form fieldset {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0 20px;
+    gap: 0 calc(20px * var(--app-spacingScale));
     align-items: start;
   }
   .record-form-panel .primary-button {
@@ -981,7 +1018,7 @@ fieldset {
     min-height: 100px;
   }
   .record-form-panel .section-heading {
-    margin-block-end: 20px;
+    margin-block-end: calc(20px * var(--app-spacingScale));
   }
   .record-title-row {
     flex-wrap: wrap;
@@ -998,7 +1035,7 @@ fieldset {
     display: none;
   }
   .layout-top .app-brand {
-    font-size: 16px;
+    font-size: calc(16px * var(--app-typeScale));
     margin-inline-end: 0;
   }
   .layout-top .connection {
@@ -1014,14 +1051,16 @@ fieldset {
   }
   .development-notice {
     inset-inline-start: 0;
-    padding: 9px 16px;
-    font-size: 9px;
+    padding: calc(9px * var(--app-spacingScale))
+      calc(16px * var(--app-spacingScale));
+    font-size: calc(9px * var(--app-typeScale));
   }
   .app-topbar,
   .layout-top .app-topbar {
     min-height: 70px;
-    padding: 12px 20px;
-    gap: 12px;
+    padding: calc(12px * var(--app-spacingScale))
+      calc(20px * var(--app-spacingScale));
+    gap: calc(12px * var(--app-spacingScale));
   }
   .mobile-menu {
     display: inline-flex;
@@ -1033,7 +1072,7 @@ fieldset {
   .breadcrumbs {
     flex: 1;
     min-width: 0;
-    gap: 10px;
+    gap: calc(10px * var(--app-spacingScale));
   }
   .breadcrumbs span:first-child {
     white-space: nowrap;
@@ -1051,7 +1090,7 @@ fieldset {
     height: 6px;
   }
   .app-topbar .app-brand {
-    font-size: 15px;
+    font-size: calc(15px * var(--app-typeScale));
     margin: 0;
     flex: 1;
   }
@@ -1062,55 +1101,57 @@ fieldset {
     width: 28px;
   }
   .app-body main {
-    padding: 29px 20px;
+    padding: calc(29px * var(--app-spacingScale))
+      calc(20px * var(--app-spacingScale));
   }
   .page-heading {
-    margin-block-end: 27px;
+    margin-block-end: calc(27px * var(--app-spacingScale));
   }
   .page-heading h1 {
-    font-size: 34px;
+    font-size: calc(34px * var(--app-typeScale) * var(--app-headingScale));
     letter-spacing: -1px;
     max-width: 500px;
   }
   .page-heading > p:last-child {
-    font-size: 12px;
+    font-size: calc(12px * var(--app-typeScale));
   }
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin-block-end: 22px;
+    gap: calc(12px * var(--app-spacingScale));
+    margin-block-end: calc(22px * var(--app-spacingScale));
   }
   .metrics article {
     min-height: 124px;
-    padding: 20px;
+    padding: calc(20px * var(--app-spacingScale));
   }
   .metrics article > strong {
-    font-size: 29px;
+    font-size: calc(29px * var(--app-typeScale));
   }
   .metrics article > p {
-    font-size: 10px;
-    margin-block-end: 10px;
+    font-size: calc(10px * var(--app-typeScale));
+    margin-block-end: calc(10px * var(--app-spacingScale));
   }
   .overview-grid {
-    gap: 20px;
+    gap: calc(20px * var(--app-spacingScale));
   }
   .panel-header {
-    padding: 20px;
-    gap: 12px;
+    padding: calc(20px * var(--app-spacingScale));
+    gap: calc(12px * var(--app-spacingScale));
     flex-wrap: wrap;
   }
   .panel-header h2 {
-    font-size: 16px;
+    font-size: calc(16px * var(--app-typeScale) * var(--app-headingScale));
   }
   .panel-header p {
-    font-size: 10px;
+    font-size: calc(10px * var(--app-typeScale));
   }
   .panel-header .text-button {
-    font-size: 10px;
+    font-size: calc(10px * var(--app-typeScale));
   }
   .record-card {
-    gap: 12px;
-    padding: 21px 20px;
+    gap: calc(12px * var(--app-spacingScale));
+    padding: calc(21px * var(--app-spacingScale))
+      calc(20px * var(--app-spacingScale));
   }
   .record-content {
     flex-basis: calc(100% - 50px);
@@ -1120,13 +1161,14 @@ fieldset {
     align-self: auto;
   }
   .record-title-row h3 {
-    font-size: 13px;
+    font-size: calc(13px * var(--app-typeScale) * var(--app-headingScale));
   }
   .record-meta {
-    gap: 7px;
+    gap: calc(7px * var(--app-spacingScale));
   }
   .source-card {
-    padding: 27px 24px;
+    padding: calc(27px * var(--app-spacingScale))
+      calc(24px * var(--app-spacingScale));
     min-height: 260px;
   }
   .source-orbit {
@@ -1140,29 +1182,29 @@ fieldset {
   }
   .source-card .eyebrow {
     max-width: 190px;
-    margin-block-start: 80px;
+    margin-block-start: calc(80px * var(--app-spacingScale));
   }
   .source-card h2 {
     max-width: 260px;
   }
   .customization-banner {
-    padding: 20px;
-    gap: 13px;
+    padding: calc(20px * var(--app-spacingScale));
+    gap: calc(13px * var(--app-spacingScale));
   }
   .customization-banner h2 {
-    font-size: 13px;
+    font-size: calc(13px * var(--app-typeScale) * var(--app-headingScale));
   }
   .customization-banner p {
-    font-size: 10px;
+    font-size: calc(10px * var(--app-typeScale));
   }
   .app-footer {
-    padding: 20px;
+    padding: calc(20px * var(--app-spacingScale));
     flex-direction: column;
-    gap: 8px;
-    font-size: 9px;
+    gap: calc(8px * var(--app-spacingScale));
+    font-size: calc(9px * var(--app-typeScale));
   }
   .record-form-panel {
-    padding: 22px;
+    padding: calc(22px * var(--app-spacingScale));
   }
   .record-form-panel form fieldset {
     display: block;
@@ -1171,23 +1213,24 @@ fieldset {
     width: 100%;
   }
   .guide-panel > article {
-    padding: 23px 20px;
-    gap: 13px;
+    padding: calc(23px * var(--app-spacingScale))
+      calc(20px * var(--app-spacingScale));
+    gap: calc(13px * var(--app-spacingScale));
   }
   .guide-panel h2 {
-    font-size: 15px;
+    font-size: calc(15px * var(--app-typeScale) * var(--app-headingScale));
   }
   .guide-panel p {
-    font-size: 11px;
+    font-size: calc(11px * var(--app-typeScale));
   }
   .settings-panel {
-    padding: 24px;
+    padding: calc(24px * var(--app-spacingScale));
   }
   .refresh-button {
     min-width: 32px;
   }
   .mobile-navigation .app-brand {
-    font-size: 16px;
+    font-size: calc(16px * var(--app-typeScale));
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1199,5 +1242,39 @@ fieldset {
   *:after {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+/* Semantic parent controls; structural layout remains app-owned source. */
+button,
+input,
+textarea,
+select {
+  font-family: var(--app-controlFontFamily);
+}
+.field input,
+.field textarea,
+.filter-label select {
+  font-family: var(--app-controlFontFamily);
+  font-size: var(--app-controlFontSize);
+  border-radius: var(--app-controlRadius);
+  padding: var(--app-controlPaddingY) var(--app-controlPaddingX);
+}
+.primary-button {
+  font-size: var(--app-buttonFontSize);
+  border-radius: var(--app-controlRadius);
+}
+.nav-link {
+  border-radius: var(--app-navRadius);
+}
+.app-body main {
+  padding: var(--app-pagePadding);
+}
+.record-form-panel {
+  padding: var(--app-panelPadding);
+}
+@media (max-width: 767px) {
+  .app-body main {
+    padding: var(--app-mobilePagePadding);
   }
 }

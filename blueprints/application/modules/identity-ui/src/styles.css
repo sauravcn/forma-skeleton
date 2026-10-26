@@ -51,8 +51,8 @@
   opacity: 0.7;
 }
 .forma-identity :focus-visible {
-  outline: 3px solid var(--app-highlight, currentColor);
-  outline-offset: 3px;
+  outline: var(--app-focusWidth, 3px) solid var(--app-focus, currentColor);
+  outline-offset: var(--app-focusOffset, 3px);
 }
 .forma-identity [role="alert"] {
   color: var(--app-error, inherit);
@@ -81,4 +81,23 @@
     animation: none;
     transition: none;
   }
+}
+
+.forma-identity h1,
+.forma-identity h2 {
+  font-family: var(--app-headingFontFamily, inherit);
+  line-height: var(--app-headingLineHeight, 1.25);
+  font-size: calc(2em * var(--app-headingScale, 1));
+}
+.forma-identity input,
+.forma-identity button {
+  font-family: var(--app-controlFontFamily, inherit);
+  font-size: var(--app-controlFontSize, inherit);
+  border-radius: var(--app-controlRadius, var(--app-radius, 0));
+  padding: var(--app-controlPaddingY, 0.75rem)
+    var(--app-controlPaddingX, 0.75rem);
+}
+.forma-identity__panel,
+.forma-identity__aside {
+  padding: var(--app-panelPadding, clamp(1rem, 4vw, 3rem));
 }
