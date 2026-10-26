@@ -19,7 +19,8 @@
     "test:visual": "node tests/blueprint-consumers/run-visual.mjs",
     "test:python-package": "python3 tests/blueprint-consumers/verify-python-package.py",
     "test:identity-boundary": "npm run test --workspace @forma/identity-boundary-proof",
-    "test:templates": "node --test blueprints/application/frontend/test/*.test.mjs && python3 -m unittest discover -s blueprints/application/backend/tests -p test_api.py"
+    "test:templates": "node --test blueprints/application/frontend/test/*.test.mjs && python3 -m unittest discover -s blueprints/application/backend/tests -p test_api.py",
+    "test:navigation": "node tests/blueprint-consumers/run-navigation.mjs"
   },
   "devDependencies": {
     "playwright": "1.64.1",

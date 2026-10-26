@@ -74,3 +74,5 @@ Rendered examples from the external generated child: [desktop](docs/screenshots/
 Developer-assistant guidance and a machine-readable public records API contract are delivered in generated AGENTS.md and contracts/records.openapi.json. They support reviewed developer customization; they do not start an agent or provide a hosted prompt service.
 
 The separate packages/identity-boundary engineering fixture exercises maintained PostgreSQL sessions and server-derived Python ownership with `npm run test:identity-boundary` (Docker and cached postgres:17-bookworm required). It is not bundled into generated apps and does not implement password/TOTP/provider lifecycle. See its README and the identity design for exact limits.
+
+After a fresh `npm run test:consumer`, run `npm run test:navigation` for nested-manifest and keyboard/modal/focus checks across the three renderers. It modifies only the temporary generated example and uses its own synthetic database.

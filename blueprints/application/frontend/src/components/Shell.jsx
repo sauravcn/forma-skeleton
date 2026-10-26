@@ -19,15 +19,52 @@ export default function Shell({
 }) {
   const [open, setOpen] = useState(false),
     button = useRef(null),
-    dialog = useRef(null);
+    dialog = useRef(null),
+    closeButton = useRef(null),
+    main = useRef(null);
   useEffect(() => {
     if (open) {
-      dialog.current?.showModal();
+      if (!dialog.current?.open) dialog.current?.showModal();
+      closeButton.current?.focus();
     } else if (dialog.current?.open) dialog.current.close();
   }, [open]);
-  function closeMenu() {
+  useEffect(() => {
     setOpen(false);
-    button.current?.focus();
+    if (dialog.current?.open) dialog.current.close();
+    main.current?.focus();
+  }, [page]);
+  function closeMenu(restoreFocus = true) {
+    setOpen(false);
+    if (dialog.current?.open) dialog.current.close();
+    if (restoreFocus) button.current?.focus();
+  }
+  function navigate() {
+    closeMenu(false);
+    requestAnimationFrame(() => {
+      if (main.current?.isConnected) main.current.focus();
+    });
+  }
+  function trapDialogFocus(event) {
+    if (event.key !== "Tab") return;
+    const controls = [
+      ...dialog.current.querySelectorAll(
+        "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]",
+      ),
+    ].filter(
+      (element) => element.tabIndex >= 0 && element.getClientRects().length,
+    );
+    const first = controls[0],
+      last = controls.at(-1);
+    if (!first) {
+      event.preventDefault();
+      dialog.current.focus();
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
   function links(position) {
     const tree = navigationTree(
@@ -67,9 +104,10 @@ export default function Shell({
             >
               <Link
                 href={item.href}
+                data-navigation-id={item.id}
                 aria-current={page === item.id ? "page" : undefined}
                 className={page === item.id ? "nav-link active" : "nav-link"}
-                onClick={() => setOpen(false)}
+                onClick={navigate}
               >
                 <Icon name={item.icon} />
                 <span>{i.t(item.labelKey)}</span>
@@ -83,7 +121,7 @@ export default function Shell({
     return list(tree);
   }
   const brand = (
-    <Link className="app-brand" href="/">
+    <Link className="app-brand" href="/" onClick={navigate}>
       <span className="brand-symbol">
         <Icon name="mark" width="24" height="24" />
       </span>
@@ -117,6 +155,8 @@ export default function Shell({
             className="icon-button mobile-menu"
             aria-label={i.t("app.menu")}
             aria-expanded={open}
+            aria-controls="mobile-navigation"
+            aria-haspopup="dialog"
             onClick={() => setOpen(true)}
           >
             <Icon name="menu" />
@@ -150,7 +190,7 @@ export default function Shell({
             <Icon name="refresh" />
           </button>
         </header>
-        <main id="main-content" tabIndex="-1">
+        <main ref={main} id="main-content" tabIndex="-1">
           {children}
         </main>
         <footer className="app-footer">
@@ -163,19 +203,29 @@ export default function Shell({
       </div>
       <dialog
         ref={dialog}
+        id="mobile-navigation"
+        aria-labelledby="mobile-navigation-title"
         className="mobile-navigation"
-        onCancel={closeMenu}
+        onKeyDown={trapDialogFocus}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeMenu();
+        }}
         onClick={(e) => {
           if (e.target === dialog.current) closeMenu();
         }}
       >
+        <h2 id="mobile-navigation-title" className="visually-hidden">
+          {i.t("app.navigation")}
+        </h2>
         <div className="mobile-navigation-head">
           {brand}
           <button
             type="button"
             className="icon-button"
+            ref={closeButton}
             aria-label={i.t("app.closeMenu")}
-            onClick={closeMenu}
+            onClick={() => closeMenu()}
           >
             <Icon name="close" />
           </button>

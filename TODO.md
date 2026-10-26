@@ -10,4 +10,4 @@ Next gates: installed npm-command generation, clean external npm ci/tests/build/
 
 Follow-on work: maintained-library identity boundary, password/TOTP/recovery/provider adapters; full presentation/accessibility/localization contract; safe upgrade proposals; AI customization; per-purchase licensing and hosting. Unsupported capabilities must fail honestly. No paid infrastructure, registry publication or production deployment is authorized by a coding ticket alone.
 
-Follow-on source work: navigation manifest0034 is reviewed/merged; renderer keyboard acceptance0035 is active. Reviewed developer-agent guidance/OpenAPI delivery0064 and non-shipped basic-session identity0039 proof follow; actual generated authentication/password/TOTP/providers remain unfinished. Never treat fixture tests as their acceptance.
+Follow-on source work: navigation manifest0034 is reviewed/merged; renderer keyboard acceptance0035 is reviewed and verified. Reviewed developer-agent guidance/OpenAPI delivery0064 and non-shipped basic-session identity0039 proof follow; actual generated authentication/password/TOTP/providers remain unfinished. Never treat fixture tests as their acceptance.
