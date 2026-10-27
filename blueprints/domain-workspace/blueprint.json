@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "forma.domain-workspace",
+  "version": "0.1.0",
+  "kind": "authoring-workspace",
+  "securityProfile": "password-totp-v1",
+  "status": "unfinished-domain",
+  "migrationRule": "001 is immutable foundation metadata; domain SQL starts at 002",
+  "requiredPackages": [
+    "@forma/app-foundation",
+    "@forma/standalone-identity",
+    "@forma/localization",
+    "@forma/ui",
+    "@forma/api-client",
+    "forma-sdk"
+  ],
+  "registeredIcons": [
+    "layers"
+  ]
+}

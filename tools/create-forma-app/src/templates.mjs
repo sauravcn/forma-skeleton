@@ -1,14 +1,39 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
-export const templates = [
-  "field-service",
-  "accounting-studio",
-  "table-kitchen",
-  "clinic-desk",
-  "client-studio",
-  "care-center",
-];
+import { fileURLToPath } from "node:url";
+export function validTemplateId(id) {
+  return typeof id === "string" && /^[a-z][a-z0-9-]{1,63}$/.test(id);
+}
+export async function catalogIds(root, { optional = false } = {}) {
+  const file = path.join(root, "catalog.json");
+  let stat;
+  try {
+    stat = await fs.lstat(file);
+  } catch (error) {
+    if (optional && error.code === "ENOENT") return [];
+    throw error;
+  }
+  if (!stat.isFile() || stat.isSymbolicLink())
+    throw Error("Catalog index must be regular source");
+  const value = JSON.parse(await fs.readFile(file, "utf8"));
+  if (
+    value?.schemaVersion !== 1 ||
+    !Array.isArray(value.apps) ||
+    !value.apps.length ||
+    value.apps.some((id) => !validTemplateId(id)) ||
+    new Set(value.apps).size !== value.apps.length
+  )
+    throw Error("Invalid advertised template catalog");
+  return value.apps;
+}
+export const templates = await catalogIds(
+  path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../bundle/templates",
+  ),
+  { optional: true },
+);
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 function safe(name) {
   if (
@@ -47,7 +72,7 @@ function permitted(relative) {
 }
 // Exact inventory validation precedes any destination creation or source copying.
 export async function readTemplate(root, id) {
-  if (!templates.includes(id)) throw new Error(`Unknown app template: ${id}`);
+  if (!validTemplateId(id)) throw new Error(`Unknown app template: ${id}`);
   const files = new Map();
   async function walk(dir, prefix = "") {
     const stat = await fs.lstat(dir);
@@ -74,7 +99,7 @@ export async function readTemplate(root, id) {
   return validateTemplate(files, id);
 }
 export function validateTemplate(files, id) {
-  if (!templates.includes(id)) throw new Error(`Unknown app template: ${id}`);
+  if (!validTemplateId(id)) throw new Error(`Unknown app template: ${id}`);
   for (const name of files.keys()) permitted(name);
   const parse = (name) => {
     if (!files.has(name))
@@ -130,7 +155,7 @@ export function validateTemplate(files, id) {
 // A single JSON envelope survives npm's special omission/renaming of nested
 // package-lock.json and .gitignore files. Decoded paths still pass full gates.
 export async function readBundledTemplate(root, id) {
-  if (!templates.includes(id)) throw new Error(`Unknown app template: ${id}`);
+  if (!validTemplateId(id)) throw new Error(`Unknown app template: ${id}`);
   const file = path.join(root, "templates", `${id}.json`);
   const stat = await fs.lstat(file);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 32 * 1024 * 1024)

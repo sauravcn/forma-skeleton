@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
-  templates,
+  catalogIds,
   readTemplate,
   serializeTemplate,
 } from "../src/templates.mjs";
@@ -80,6 +80,10 @@ try {
     path.join(repo, "blueprints/application"),
     path.join(temporary, "blueprint"),
   );
+  await copy(
+    path.join(repo, "blueprints/domain-workspace"),
+    path.join(temporary, "domain-workspace"),
+  );
   // Canonical same-repository source becomes ordinary child-owned physical source.
   // Snapshot hashes below cover every vendored byte; generation never needs this checkout.
   const vendored = [
@@ -110,7 +114,13 @@ try {
   if (catalog) {
     if (await exists(path.join(catalog, ".catalog.pending")))
       throw new Error("Template catalog is incomplete");
-    for (const id of templates) {
+    const ids = await catalogIds(path.resolve(catalog));
+    await fs.mkdir(path.join(temporary, "templates"), { recursive: true });
+    await fs.writeFile(
+      path.join(temporary, "templates/catalog.json"),
+      JSON.stringify({ schemaVersion: 1, apps: ids }, null, 2) + "\n",
+    );
+    for (const id of ids) {
       const template = await readTemplate(
         path.join(path.resolve(catalog), id),
         id,

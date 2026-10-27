@@ -1,0 +1,61 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: var(--app-fontFamily, Arial, sans-serif);
+  background: var(--app-background, #fff);
+  color: var(--app-text, #222);
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+.domain-workspace {
+  max-width: 1440px;
+  margin: auto;
+  padding: 24px;
+}
+.domain-workspace > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.workspace-grid {
+  display: flex;
+  gap: 24px;
+}
+.workspace-grid > main {
+  min-width: 0;
+  flex: 1;
+  padding: 24px;
+  border: 1px solid var(--app-border, #ddd);
+  border-radius: var(--app-radius, 8px);
+}
+.workspace-identity > header {
+  margin-bottom: 24px;
+  color: var(--app-accent);
+}
+@media (max-width: 800px) {
+  .domain-workspace {
+    padding: 12px;
+  }
+  .workspace-grid {
+    display: block;
+  }
+  .domain-workspace > header {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}

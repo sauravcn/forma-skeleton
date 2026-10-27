@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { templates, serializeTemplate } from "../src/templates.mjs";
+const fixtureIds = ["customer-alpha", "customer-beta", "seventh-product"];
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 function run(command, args, cwd) {
@@ -28,7 +29,7 @@ function run(command, args, cwd) {
   );
   return result.stdout;
 }
-test("actual npm pack and installed bin preserve serialized gitignore/lock bytes for all six templates", async (t) => {
+test("actual npm pack and installed bin preserve serialized gitignore/lock bytes for arbitrary advertised templates", async (t) => {
   const temp = await fs.mkdtemp(
     path.join(os.tmpdir(), "forma-packed-templates-"),
   );
@@ -54,7 +55,11 @@ test("actual npm pack and installed bin preserve serialized gitignore/lock bytes
     force: true,
   });
   await fs.mkdir(path.join(source, "bundle/templates"));
-  for (const id of templates) {
+  await fs.writeFile(
+    path.join(source, "bundle/templates/catalog.json"),
+    JSON.stringify({ schemaVersion: 1, apps: fixtureIds }),
+  );
+  for (const id of fixtureIds) {
     const files = new Map();
     const add = (name, value) =>
       files.set(name, {
@@ -97,6 +102,18 @@ test("actual npm pack and installed bin preserve serialized gitignore/lock bytes
       serializeTemplate({ files }, id),
     );
   }
+  // This isolated package fixture substitutes synthetic domain payloads, so its
+  // top-level inventory must honestly describe those fixture bytes as well.
+  const provenanceFile = path.join(source, "bundle/provenance.json");
+  const provenance = JSON.parse(await fs.readFile(provenanceFile, "utf8"));
+  for (const name of Object.keys(provenance.files))
+    if (name.startsWith("templates/")) delete provenance.files[name];
+  for (const name of await fs.readdir(path.join(source, "bundle/templates")))
+    provenance.files["templates/" + name] = sha(
+      await fs.readFile(path.join(source, "bundle/templates", name)),
+    );
+  provenance.snapshotHash = sha(JSON.stringify(provenance.files));
+  await fs.writeFile(provenanceFile, JSON.stringify(provenance));
   const packed = JSON.parse(
     run(
       "npm",
@@ -117,7 +134,7 @@ test("actual npm pack and installed bin preserve serialized gitignore/lock bytes
     ],
     consumer,
   );
-  for (const id of templates) {
+  for (const id of fixtureIds) {
     const destination = path.join(temp, "customer-" + id);
     run(
       path.join(consumer, "node_modules/.bin/create-forma-app"),
@@ -139,4 +156,46 @@ test("actual npm pack and installed bin preserve serialized gitignore/lock bytes
       id,
     );
   }
+  const definition = {
+    schemaVersion: 1,
+    id: "packed-workspace",
+    name: "Packed Workspace",
+    nameKey: "packed.name",
+    pythonModule: "forma_packed_workspace",
+    webPort: 3400,
+    apiPort: 9000,
+    navigationLayout: "top",
+    theme: { name: "custom", tokens: { accent: "#aabbcc" } },
+    navigation: [
+      { id: "overview", labelKey: "packed.overview", icon: "layers" },
+    ],
+    labels: {
+      "packed.name": "Packed Workspace",
+      "packed.overview": "Overview",
+    },
+  };
+  const definitionFile = path.join(consumer, "definition.json"),
+    workspace = path.join(temp, "new-workspace");
+  await fs.writeFile(definitionFile, JSON.stringify(definition));
+  run(
+    path.join(consumer, "node_modules/.bin/create-forma-app"),
+    [workspace, "--workspace-domain", definitionFile, "--yes"],
+    consumer,
+  );
+  assert.equal(
+    JSON.parse(
+      await fs.readFile(
+        path.join(workspace, "WORKSPACE_BLUEPRINT.json"),
+        "utf8",
+      ),
+    ).status,
+    "unfinished-domain",
+  );
+  assert.match(
+    await fs.readFile(
+      path.join(workspace, "backend/forma_packed_workspace/repository.py"),
+      "utf8",
+    ),
+    /authorize_operation/,
+  );
 });

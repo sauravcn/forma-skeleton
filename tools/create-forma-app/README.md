@@ -35,7 +35,7 @@ Prepack copies canonical lifecycle, boundary Python, presentation and original r
 
 The authenticated profile is under active integration; do not infer installed-package/browser acceptance from successful config or assembly tests. Public regression and authenticated external-consumer proofs are separate gates.
 
-### Six business-app templates (optional distribution catalog)
+### Registered business-app templates (optional distribution catalog)
 
 A catalog-enabled package supports the conventional command:
 
@@ -59,7 +59,7 @@ and existing profiles. A package built without the optional catalog reports a
 clear unsupported-template error rather than fetching private source.
 
 Maintainers prepare reviewed complete app exports in an explicit catalog with
-one directory per template. Then build or pack with that input:
+one directory per template plus `catalog.json` with `{schemaVersion:1,apps:["app-id",...]}`. Advertised IDs are validated; no fixed six-app list is built into the generator. Then build or pack with that input:
 
 ```sh
 node tools/create-forma-app/scripts/build.mjs --catalog-dir /reviewed/catalog
@@ -68,7 +68,7 @@ FORMA_TEMPLATE_CATALOG_DIR=/reviewed/catalog npm pack --workspace tools/create-f
 
 The environment variable is required for `npm pack` because its prepack hook
 rebuilds the bundle. No catalog is inferred from sibling checkout locations.
-The build validates all six inventories, hashes, fixed profiles and completion
+The build validates all advertised inventories, hashes, fixed profiles and completion
 markers, refuses pending catalogs/symlinks/private runtime artifacts, and copies
 the exports into self-contained path/base64 JSON payloads in the package. This
 preserves exact source bytes, including `.gitignore` and lockfiles, through npm
@@ -79,3 +79,35 @@ source provenance, third-party notices and customer AGENTS instructions remain
 included. These hashes provide integrity checks, not a signed license grant or
 supplier-authenticity guarantee. No public npm publication is performed by this
 workflow; the package can be installed/tested from its tarball first.
+
+### Generate a new authoring workspace from the backbone
+
+```sh
+node tools/create-forma-app/bin/create-forma-app.mjs /repo/apps/new-app --workspace-domain /reviewed/definition.json --yes
+```
+
+This mode is distinct from a complete standalone customer project. It creates a
+new app directory only, refuses existing destinations, and never edits the
+parent registry, package manifest, lock or shared English catalog. A maintainer
+reviews `registration.proposal.json` and `localization.proposal.json` before
+integrating them into the authoring repository. Required shared library source
+must already be available there; customer delivery subsequently uses the
+application exporter to copy the full selected dependency closure.
+
+Definition version1 fields are `schemaVersion`, `id`, `name`, `nameKey`,
+`pythonModule` (`forma_` plus the underscore-separated ID), distinct integer
+`webPort`/`apiPort`, `navigationLayout`, `theme:{name,tokens}`,
+`navigation:[{id,labelKey,icon}]` and `labels:{EnglishKey:wholeMessage}`.
+Stable IDs/paths/module names, English bindings, theme values and navigation are
+validated. Version0.1 registers the `layers` navigation icon; extend the app-owned bindings and UI source for domain-specific icons. The versioned `blueprints/domain-workspace` source is pinned in the
+package snapshot; generation records blueprint/input/source/output hashes in
+`WORKSPACE_BLUEPRINT.json`. Parent directories and runtime databases are not
+modified. Identical input produces identical source bytes.
+
+The generated app has maintained foundation/identity/API wiring and an app-owned
+layout, theme, navigation and Python package. Its domain is explicitly unfinished:
+authorization fails closed with503 and the domain mutation stub returns501 until implemented. Keep `001_foundation.sql` immutable and
+add domain migrations from002 onward. Domain workflows, role policy, tests,
+independent builds and real browser acceptance must be supplied before claiming
+a functional product. This scaffold does not clone another business app or grant
+live AI/provider/payment/production capabilities.
