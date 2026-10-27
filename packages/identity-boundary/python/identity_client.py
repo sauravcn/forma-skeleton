@@ -27,6 +27,8 @@ class IdentityClient:
         organization_id,
         cookie_name,
         required_assurance="basic-session-fixture",
+        *,
+        allowed_permissions,
     ):
         parsed = urlsplit(url)
         if (
@@ -50,6 +52,17 @@ class IdentityClient:
             raise ValueError("Explicit maintained session cookie name is required")
         if required_assurance not in ("basic-session-fixture", "mfa-session-v1"):
             raise ValueError("Explicit supported server assurance policy is required")
+        if (
+            not isinstance(allowed_permissions, (set, frozenset, tuple, list))
+            or not 0 < len(allowed_permissions) <= 64
+            or any(
+                not isinstance(item, str)
+                or not re.fullmatch(r"[a-z][a-z0-9-]*:[a-z][a-z0-9:-]*", item)
+                for item in allowed_permissions
+            )
+        ):
+            raise ValueError("Explicit domain permission vocabulary required")
+        self.allowed_permissions = frozenset(allowed_permissions)
         self.required_assurance = required_assurance
         self.url, self.app_id, self.organization_id = url, app_id, organization_id
         self.cookie_name = cookie_name
@@ -113,12 +126,7 @@ class IdentityClient:
         ):
             raise Denied(503, "identity.error.unavailable")
         permissions = principal["permissions"]
-        allowed = {
-            "records:read",
-            "records:write",
-            "records:read:any",
-            "records:write:any",
-        }
+        allowed = self.allowed_permissions
         if (
             not isinstance(permissions, list)
             or len(permissions) > len(allowed)

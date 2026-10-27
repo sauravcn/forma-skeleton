@@ -31,6 +31,31 @@ class RepositoryTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def test_public_source_refuses_authenticated_marker_before_read_or_write(self):
+        record = self.repository.create({"title": "Retained synthetic row"})
+        with sqlite3.connect(self.database) as connection:
+            connection.execute(
+                "CREATE TABLE forma_store_manifest(singleton INTEGER PRIMARY KEY)"
+            )
+        for operation in (
+            self.repository.initialize,
+            self.repository.ready,
+            self.repository.records,
+            lambda: self.repository.create({"title": "No"}),
+            lambda: self.repository.transition(
+                record["id"], {"status": "done", "expected_revision": 1}
+            ),
+        ):
+            with self.assertRaises(RuntimeError):
+                operation()
+        with sqlite3.connect(self.database) as connection:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT title,status,revision FROM records"
+                ).fetchone(),
+                (record["title"], "todo", 1),
+            )
+
     def test_empty_initialization_create_and_reopen_preserve_user_content(self):
         self.assertEqual(self.repository.records(), [])
         title = "Synthetic ' DROP TABLE records; — example"

@@ -1,19 +1,15 @@
 /** Server-owned proof tied to maintained session IDs; not client MFA metadata. */
-import { createAuthMiddleware, APIError, isAPIError } from "better-auth/api";
+import {
+  createAuthMiddleware,
+  createAuthEndpoint,
+  APIError,
+  isAPIError,
+} from "better-auth/api";
+import { expireCookie } from "better-auth/cookies";
 import { symmetricDecrypt } from "better-auth/crypto";
 import { createOTP } from "@better-auth/utils/otp";
 import { timingSafeEqual } from "node:crypto";
 
-const scopes = {
-  viewer: ["records:read"],
-  member: ["records:read", "records:write"],
-  admin: [
-    "records:read",
-    "records:write",
-    "records:read:any",
-    "records:write:any",
-  ],
-};
 const credentialPaths = new Set(["/sign-in/email", "/sign-in/username"]);
 const mutationPaths = new Set([
   "/reset-password",
@@ -39,17 +35,14 @@ export function createAssurance({
   organizationId,
   enableTotp,
   requireMfa,
+  permissionPolicy,
 }) {
-  async function initialize() {
-    await pool.query(`CREATE TABLE IF NOT EXISTS forma_identity_policy(singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK(singleton),app_id TEXT NOT NULL,organization_id TEXT NOT NULL,require_mfa BOOLEAN NOT NULL,epoch INTEGER NOT NULL DEFAULT 1);
-   CREATE TABLE IF NOT EXISTS forma_user_security(user_id TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,epoch INTEGER NOT NULL DEFAULT 1);
-   CREATE TABLE IF NOT EXISTS forma_session_assurance(session_id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,user_epoch INTEGER NOT NULL,policy_epoch INTEGER NOT NULL,method TEXT NOT NULL CHECK(method IN ('totp','recovery')),asserted_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
-   CREATE TABLE IF NOT EXISTS forma_used_totp(user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,factor_id TEXT NOT NULL,counter BIGINT NOT NULL,PRIMARY KEY(user_id,factor_id,counter));
-   CREATE TABLE IF NOT EXISTS identity_memberships(user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,organization_id TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN ('viewer','member','admin')),active BOOLEAN NOT NULL DEFAULT TRUE,PRIMARY KEY(user_id,organization_id));`);
-    await pool.query(
-      "INSERT INTO forma_identity_policy(singleton,app_id,organization_id,require_mfa) VALUES(TRUE,$1,$2,$3) ON CONFLICT DO NOTHING",
-      [appId, organizationId || "", requireMfa],
-    );
+  async function initialize({ migrate = true } = {}) {
+    if (migrate)
+      await pool.query(
+        "INSERT INTO forma_identity_policy(singleton,app_id,organization_id,require_mfa) VALUES(TRUE,$1,$2,$3) ON CONFLICT DO NOTHING",
+        [appId, organizationId || "", requireMfa],
+      );
     const policy = (
       await pool.query(
         "SELECT * FROM forma_identity_policy WHERE singleton=TRUE",
@@ -108,6 +101,48 @@ export function createAssurance({
   }
   const plugin = {
     id: "forma-session-assurance",
+    endpoints: {
+      formaDescriptor: createAuthEndpoint(
+        "/forma-state",
+        { method: "GET", requireHeaders: true },
+        async (ctx) => {
+          const current = await getAuth().api.getSession({
+            headers: ctx.headers,
+            query: { disableCookieCache: true, disableRefresh: true },
+          });
+          if (current?.user) {
+            if (!current.user.emailVerified)
+              return ctx.json({ stage: "forbidden" });
+            if (!current.user.twoFactorEnabled)
+              return ctx.json({
+                stage: "enroll",
+                user: { name: current.user.name },
+              });
+            if (!(await hasProof(current)))
+              return ctx.json({
+                stage: "challenge",
+                user: { name: current.user.name },
+              });
+            const result = await introspect(ctx.headers.get("cookie") || "");
+            return ctx.json({
+              stage: result.status === 200 ? "authenticated" : "forbidden",
+              user: { name: current.user.name },
+            });
+          }
+          const signed = await ctx.getSignedCookie(
+            ctx.context.createAuthCookie("two_factor").name,
+            ctx.context.secret,
+          );
+          if (signed) {
+            const record =
+              await ctx.context.internalAdapter.findVerificationValue(signed);
+            if (record && new Date(record.expiresAt) > new Date())
+              return ctx.json({ stage: "challenge" });
+          }
+          return ctx.json({ stage: "signed-out" });
+        },
+      ),
+    },
     hooks: {
       before: [
         {
@@ -115,9 +150,42 @@ export function createAssurance({
             verifiedPaths.has(ctx.path) ||
             mutationPaths.has(ctx.path) ||
             sensitivePaths.has(ctx.path) ||
-            credentialPaths.has(ctx.path),
+            credentialPaths.has(ctx.path) ||
+            ctx.path === "/sign-out",
           handler: createAuthMiddleware(async (ctx) => {
             const state = requestState.getStore();
+            if (ctx.path === "/sign-out") {
+              if (!state)
+                throw new APIError("FORBIDDEN", {
+                  code: "MANAGED_HTTP_REQUIRED",
+                  message: "Managed HTTP context required",
+                });
+              const current = await getAuth().api.getSession({
+                headers: ctx.headers,
+                query: { disableCookieCache: true, disableRefresh: true },
+              });
+              const signed = await ctx.getSignedCookie(
+                ctx.context.createAuthCookie("two_factor").name,
+                ctx.context.secret,
+              );
+              const pending = signed
+                ? await ctx.context.internalAdapter.findVerificationValue(
+                    signed,
+                  )
+                : null;
+              const userId = current?.user?.id || pending?.value;
+              if (userId) {
+                const client = await acquire(state, userId);
+                if (current?.session?.id) {
+                  state.logoutSessionId = current.session.id;
+                  await client.query(
+                    "DELETE FROM forma_session_assurance WHERE session_id=$1",
+                    [current.session.id],
+                  );
+                }
+              }
+              return;
+            }
             if (credentialPaths.has(ctx.path)) {
               // Lookup selects only a serialization key; the maintained endpoint
               // verifies the credential after this lock, never this lookup.
@@ -368,6 +436,7 @@ export function createAssurance({
       after: [
         {
           matcher: (ctx) =>
+            ctx.path === "/sign-out" ||
             verifiedPaths.has(ctx.path) ||
             [
               "/reset-password",
@@ -377,6 +446,36 @@ export function createAssurance({
             ].includes(ctx.path),
           handler: createAuthMiddleware(async (ctx) => {
             if (isAPIError(ctx.context.returned)) return;
+            if (ctx.path === "/sign-out") {
+              const cookie = ctx.context.createAuthCookie("two_factor");
+              const signed = await ctx.getSignedCookie(
+                cookie.name,
+                ctx.context.secret,
+              );
+              if (signed) {
+                await ctx.context.internalAdapter.deleteVerificationByIdentifier(
+                  signed,
+                );
+                await ctx.context.internalAdapter.deleteVerificationByIdentifier(
+                  `2fa-attempts-${signed}`,
+                );
+              }
+              expireCookie(ctx, cookie);
+              const state = requestState.getStore();
+              if (
+                state?.logoutSessionId &&
+                (
+                  await pool.query("SELECT 1 FROM session WHERE id=$1", [
+                    state.logoutSessionId,
+                  ])
+                ).rowCount
+              )
+                throw new APIError("SERVICE_UNAVAILABLE", {
+                  code: "SESSION_REVOCATION_UNAVAILABLE",
+                  message: "Logout could not complete session deletion",
+                });
+              return;
+            }
             const state = requestState.getStore();
             if (verifiedPaths.has(ctx.path)) {
               const factor = state?.factor;
@@ -477,17 +576,22 @@ export function createAssurance({
     )
       return { status: 403 };
     const proof = await hasProof(session);
-    const member = (
-      await pool.query(
-        "SELECT role FROM identity_memberships WHERE user_id=$1 AND organization_id=$2 AND active=TRUE",
-        [session.user.id, organizationId],
-      )
-    ).rows[0];
-    if (!member || !scopes[member.role]) return { status: 403 };
+    if (typeof permissionPolicy !== "function") return { status: 403 };
+    const member = await permissionPolicy({
+      userId: session.user.id,
+      organizationId,
+      pool,
+    });
+    if (
+      !member ||
+      !Array.isArray(member.permissions) ||
+      !member.permissions.length
+    )
+      return { status: 403 };
     if (
       (policy.require_mfa ||
         session.user.twoFactorEnabled ||
-        member.role === "admin") &&
+        member.requiresMfa === true) &&
       !proof
     )
       return { status: 403 };
@@ -497,7 +601,7 @@ export function createAssurance({
         app_id: appId,
         organization_id: organizationId,
         user_id: session.user.id,
-        permissions: [...scopes[member.role]],
+        permissions: [...member.permissions],
         expires_at: new Date(session.session.expiresAt).toISOString(),
         assurance: proof ? "mfa-session-v1" : "basic-session-fixture",
       },

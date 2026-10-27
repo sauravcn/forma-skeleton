@@ -1,4 +1,4 @@
-/** Non-shipped maintained password lifecycle candidate; no MFA assurance. */
+/** Private maintained identity candidate; generated integration has separate acceptance. */
 import { betterAuth } from "better-auth";
 import { getMigrations } from "better-auth/db/migration";
 import { username } from "better-auth/plugins/username";
@@ -6,6 +6,11 @@ import { twoFactor } from "better-auth/plugins/two-factor";
 import { toNodeHandler } from "better-auth/node";
 import pg from "pg";
 import { AsyncLocalStorage } from "node:async_hooks";
+import {
+  inspectMigrationHistory,
+  recordMigrationHistory,
+  applySqlMigrations,
+} from "./migration-history.mjs";
 import { createAssurance } from "./assurance.mjs";
 
 export function createPasswordIdentity({
@@ -19,6 +24,8 @@ export function createPasswordIdentity({
   enableTotp = false,
   requireMfa = false,
   organizationId,
+  permissionPolicy,
+  onVerifiedUser,
 }) {
   if (typeof sendMail !== "function")
     throw new Error("Explicit mail transport is required");
@@ -82,12 +89,14 @@ export function createPasswordIdentity({
     connectionString: databaseUrl,
     max: 2,
     connectionTimeoutMillis: 2000,
+    options: "-c search_path=public",
   });
   lockPool.on("error", () => {});
   const pool = new pg.Pool({
     connectionString: databaseUrl,
     max: 4,
     connectionTimeoutMillis: 2000,
+    options: "-c search_path=public",
   });
   pool.on("error", () => {});
   const mailState = new AsyncLocalStorage();
@@ -117,6 +126,7 @@ export function createPasswordIdentity({
     organizationId,
     enableTotp,
     requireMfa,
+    permissionPolicy,
   });
   const options = {
     appName: appId,
@@ -137,6 +147,12 @@ export function createPasswordIdentity({
     emailVerification: {
       sendOnSignUp: true,
       expiresIn: verificationExpiresIn,
+      ...(onVerifiedUser
+        ? {
+            afterEmailVerification: async (user) =>
+              onVerifiedUser({ userId: user.id, organizationId, pool }),
+          }
+        : {}),
       autoSignInAfterVerification: false,
       sendVerificationEmail: deliver("verification"),
     },
@@ -373,7 +389,7 @@ export function createPasswordIdentity({
   });
   return {
     pool,
-    async initialize() {
+    async initialize({ migrate = true } = {}) {
       const existingPolicy = await pool.query(
         "SELECT to_regclass('forma_identity_policy') AS name",
       );
@@ -405,9 +421,33 @@ export function createPasswordIdentity({
         ).rowCount
       )
         throw new Error("Refusing enrolled MFA security downgrade");
-      const { runMigrations } = await getMigrations(options);
-      await runMigrations();
-      await assurance.initialize();
+      const inventory = await inspectMigrationHistory(pool, {
+        required: !migrate,
+      });
+      if (migrate) {
+        const { runMigrations } = await getMigrations(options);
+        await runMigrations();
+      }
+      if (migrate) await applySqlMigrations(pool, inventory);
+      await assurance.initialize({ migrate });
+      if (!migrate) {
+        for (const sql of [
+          'SELECT id,email,"emailVerified",username FROM "user" LIMIT 0',
+          'SELECT id,"userId","expiresAt" FROM session LIMIT 0',
+          'SELECT id,"userId",password FROM account LIMIT 0',
+          'SELECT identifier,value,"expiresAt" FROM verification LIMIT 0',
+          "SELECT user_id,epoch FROM forma_user_security LIMIT 0",
+          "SELECT session_id,user_id,user_epoch,policy_epoch,method FROM forma_session_assurance LIMIT 0",
+          "SELECT user_id,factor_id,counter FROM forma_used_totp LIMIT 0",
+          ...(enableTotp
+            ? [
+                'SELECT id,"userId",verified,secret,"backupCodes" FROM "twoFactor" LIMIT 0',
+              ]
+            : []),
+        ])
+          await pool.query(sql);
+      }
+      if (migrate) await recordMigrationHistory(pool, inventory);
       auth ??= betterAuth(options);
     },
     introspect: assurance.introspect,
