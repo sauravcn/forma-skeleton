@@ -1,5 +1,12 @@
 # Forma Skeleton handoff
 
+
+## Verified six-product / twelve-template delivery — October 27, 2026
+
+Canonical source PR12 [Shreesh] is MERGED; fetched functional main c20fb68 exactly matched accepted generator source. Application source PR17Shreesh/18Saurya/19Aarav/20mobilefix/21CodexQA and complete PR22 are MERGED, verified functional main c2fcbf2956ead72c64fb690fd53b6d39b23a14c7. All six new products passed actual protected business/security/mobile flows; all twelve packed templates installed/tested/built, final changed three rebuilt and final twelve source bytes matched current source. Normal twelve protected logins plus Field Service mocked-factor/operator/data-persistent restart passed with owned cleanup. Exact acceptance scopes, original-app regressions, distribution checks and local memo are in the application repo docs/product/expansion-2026-10-27/ and docs/engineering/LOCAL_TWELVE_APPS.md.
+
+FORMA0197–0228 scoped delivery is closed in the single application tracker; overall0016 and live/commercial/production acceptance remain open. No highest-demand market rank, liveAI/bank/GPS/payroll/provider, publicnpm, paidservice or deployment claim. This notes-only follow-up may advance main; fetch actual tips. Preserve local code/data and reconcile both repos before edits. No private runtime DBs, secrets, running services or temporary catalog archives are backed by Git; source/tests/screenshots/notes are.
+
 Updated 2026-10-26. This is the canonical source repository for the generator/blueprint. Existing apps and the canonical global FORMA board remain in sauravcn/forma-kernel-care-center. Read AGENTS,README,TODO,TRACKING and docs/architecture/standalone-contract.md; inspect current remote tips and dirty work before edits.
 
 The executable configuration checkpoint 01c971a is on main. Reviewed neutral implementation is merged at27d2696 and retained on feature/forma-0016-generator with Aarav frontend, Saurya backend and Shreesh CLI; Codex owns integration and external consumer proof. Same-task peer messages are available; an outbound channel to the separate local chat is not verified.
