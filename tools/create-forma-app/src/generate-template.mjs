@@ -1,9 +1,20 @@
 import path from "node:path";
 import { packageRoot, destinationPath, writePlan } from "./generate.mjs";
-import { templates, readBundledTemplate } from "./templates.mjs";
+import {
+  catalogIds,
+  validTemplateId,
+  readBundledTemplate,
+} from "./templates.mjs";
 export async function generateTemplate(id, destination, options = {}) {
-  if (!templates.includes(id)) throw new Error(`Unknown app template: ${id}`);
+  if (!validTemplateId(id)) throw new Error(`Unknown app template: ${id}`);
   const root = options.bundleRoot || path.join(packageRoot, "bundle");
+  const ids = await catalogIds(path.join(root, "templates"), {
+    optional: true,
+  });
+  if (!ids.includes(id))
+    throw Error(
+      `Unknown app template: ${id}; not bundled in this distribution`,
+    );
   const template = await readBundledTemplate(root, id).catch((error) => {
     if (error.code === "ENOENT")
       throw new Error(

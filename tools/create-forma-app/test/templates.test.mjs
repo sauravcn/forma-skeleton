@@ -12,6 +12,7 @@ import {
 } from "../src/templates.mjs";
 import { generateTemplate } from "../src/generate-template.mjs";
 import { main } from "../bin/create-forma-app.mjs";
+const fixtureIds = ["sample-domain", "seventh-product", "care-center"];
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 async function fixture(t) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "forma-template-test-"));
@@ -56,11 +57,18 @@ async function mockTemplate(root, id) {
     path.join(root, "templates", `${id}.json`),
     serializeTemplate(await readTemplate(folder, id), id),
   );
+  const catalogFile = path.join(root, "templates/catalog.json");
+  const catalog = await fs
+    .readFile(catalogFile, "utf8")
+    .then(JSON.parse)
+    .catch(() => ({ schemaVersion: 1, apps: [] }));
+  if (!catalog.apps.includes(id)) catalog.apps.push(id);
+  await fs.writeFile(catalogFile, JSON.stringify(catalog));
   return folder;
 }
-test("all six bundled template selections preserve complete reviewed source and fixed identity", async (t) => {
+test("arbitrary advertised template selections preserve complete reviewed source and fixed identity", async (t) => {
   const dir = await fixture(t);
-  for (const id of templates) {
+  for (const id of fixtureIds) {
     const source = await mockTemplate(dir, id),
       destination = path.join(dir, "customer-" + id);
     const result = await generateTemplate(id, destination, { bundleRoot: dir });
