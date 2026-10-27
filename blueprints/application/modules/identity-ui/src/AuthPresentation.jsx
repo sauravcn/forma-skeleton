@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
 import { identityMessages, identityText } from "./messages.js";
-import { defaultComponents } from "./components.jsx";
+import { defaultComponents, ProviderIcon } from "./components.jsx";
 
 const views = new Set([
   "login",
@@ -77,7 +77,8 @@ export default function AuthPresentation({
     form = useRef(null),
     heading = useRef(null),
     error = useRef(null),
-    generation = useRef(0);
+    generation = useRef(0),
+    previousView = useRef(view);
   const [submitting, setSubmitting] = useState(false),
     [localError, setLocalError] = useState(false);
   const pending = busy || submitting,
@@ -87,7 +88,8 @@ export default function AuthPresentation({
     setSubmitting(false);
     form.current?.reset();
     setLocalError(false);
-    heading.current?.focus();
+    if (previousView.current !== view) heading.current?.focus();
+    previousView.current = view;
   }, [view]);
   useEffect(() => {
     if (failed) error.current?.focus();
@@ -143,7 +145,32 @@ export default function AuthPresentation({
     }
   }
   return (
-    <AuthLayout variant={variant} title={t[view]} aside={aside}>
+    <AuthLayout
+      variant={variant}
+      title={t[view]}
+      aside={
+        aside ?? (
+          <div className="forma-identity__story">
+            <span className="forma-identity__eyebrow">{t.asideEyebrow}</span>
+            <h2>{t.asideTitle}</h2>
+            <p>{t.asideBody}</p>
+            <div className="forma-identity__story-mark" aria-hidden="true">
+              <svg
+                viewBox="0 0 100 100"
+                width="88"
+                height="88"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="7"
+                strokeLinecap="round"
+              >
+                <path d="M50 10v80M10 50h80M22 22l56 56M22 78l56-56" />
+              </svg>
+            </div>
+          </div>
+        )
+      }
+    >
       <h1 ref={heading} tabIndex={-1}>
         {t[view]}
       </h1>
@@ -212,7 +239,7 @@ export default function AuthPresentation({
       {view === "setPassword" && <p>{t.setPasswordHelp}</p>}
       {view === "login" &&
         providers.some((provider) => provider.mode === "mock") && (
-          <p>{t.mockHelp}</p>
+          <p className="forma-identity__mock-notice">{t.mockHelp}</p>
         )}
       <form ref={form} onSubmit={submit} aria-busy={pending}>
         {fields[view].map(([key, type, autoComplete]) => (
@@ -230,28 +257,40 @@ export default function AuthPresentation({
             spellCheck={false}
           />
         ))}
-        <AuthButton type="submit" disabled={pending}>
+        <AuthButton variant="primary" type="submit" disabled={pending}>
           {pending ? t.pending : view === "verify" ? t.resend : t.submit}
         </AuthButton>
       </form>
-      {view === "login" &&
-        providers.map((provider) => (
-          <AuthButton
-            key={provider.id}
-            type="button"
-            disabled={pending}
-            onClick={() => providerAction(provider)}
-          >
-            {identityText(
-              provider.mode === "mock" ? t.mockProvider : t.provider,
-              { provider: provider.label },
-            )}
-          </AuthButton>
-        ))}
+      {view === "login" && providers.length > 0 && (
+        <div className="forma-identity__divider">
+          <span>{t.orContinue}</span>
+        </div>
+      )}
+      <div className="forma-identity__providers">
+        {view === "login" &&
+          providers.map((provider) => (
+            <AuthButton
+              key={provider.id}
+              variant="social"
+              type="button"
+              disabled={pending}
+              onClick={() => providerAction(provider)}
+            >
+              <ProviderIcon provider={provider.id} />
+              <span>
+                {identityText(
+                  provider.mode === "mock" ? t.mockProvider : t.provider,
+                  { provider: provider.label },
+                )}
+              </span>
+            </AuthButton>
+          ))}
+      </div>
       {typeof onNavigate === "function" && (
-        <nav aria-label={t.login}>
+        <nav className="forma-identity__links" aria-label={t.login}>
           {view === "login" ? (
             <AuthButton
+              variant="tertiary"
               type="button"
               disabled={pending}
               onClick={() => onNavigate("resetRequest")}
@@ -260,6 +299,7 @@ export default function AuthPresentation({
             </AuthButton>
           ) : (
             <AuthButton
+              variant="tertiary"
               type="button"
               disabled={pending}
               onClick={() => onNavigate("login")}
@@ -269,6 +309,7 @@ export default function AuthPresentation({
           )}
           {view === "login" && (
             <AuthButton
+              variant="tertiary"
               type="button"
               disabled={pending}
               onClick={() => onNavigate("register")}
@@ -278,6 +319,7 @@ export default function AuthPresentation({
           )}
           {view === "challenge" && (
             <AuthButton
+              variant="tertiary"
               type="button"
               disabled={pending}
               onClick={() => onNavigate("recovery")}

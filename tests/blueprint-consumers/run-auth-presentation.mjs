@@ -42,7 +42,8 @@ await new Promise((resolve, reject) => {
     cwd: work,
     env: {
       ...process.env,
-      npm_config_cache: process.env.npm_config_cache || path.join(root, ".run", "npm-cache"),
+      npm_config_cache:
+        process.env.npm_config_cache || path.join(root, ".run", "npm-cache"),
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -68,11 +69,11 @@ import {useState} from 'react';
 import Auth from '../../src/identity-ui/AuthPresentation.jsx';
 import '../../src/identity-ui/styles.css';
 function Replacement({children,title}){return <article data-testid="replacement" aria-label={title}><header>Customer-owned replacement layout</header>{children}</article>}
-export default function Fixture(){const[view,setView]=useState('login'),[variant,setVariant]=useState('minimal'),[replacement,setReplacement]=useState(false),[provider,setProvider]=useState(false),[result,setResult]=useState(''),[failure,setFailure]=useState(false);return <div style={{'--app-fontFamily':'Georgia, serif','--app-text':'rgb(31, 45, 61)','--app-accent':'rgb(64, 50, 120)','--app-onAccent':'rgb(255, 255, 255)'}}>
+export default function Fixture(){const[view,setView]=useState('login'),[variant,setVariant]=useState('minimal'),[replacement,setReplacement]=useState(false),[provider,setProvider]=useState(false),[result,setResult]=useState(''),[failure,setFailure]=useState(false),[five,setFive]=useState(false);return <div style={{'--app-fontFamily':'Georgia, serif','--app-text':'rgb(31, 45, 61)','--app-accent':'rgb(64, 50, 120)','--app-onAccent':'rgb(255, 255, 255)'}}>
 <p>VIEW ONLY: controlled callbacks. No login, MFA, provider connection or delivery occurs.</p>
-<label>Fixture view<select value={view} onChange={e=>setView(e.target.value)}>{['login','verify','resetRequest','reset','challenge','recovery'].map(v=><option key={v}>{v}</option>)}</select></label>
-<button onClick={()=>setVariant(v=>v==='minimal'?'split':'minimal')}>Switch layout</button><button onClick={()=>setReplacement(v=>!v)}>Replace complete layout</button><button onClick={()=>setProvider(v=>!v)}>Configure fixture provider</button><button onClick={()=>setFailure(v=>!v)}>Toggle fixture failure</button>
-<Auth view={view} variant={variant} onNavigate={setView} aside={<p>App-owned supporting content</p>} components={replacement?{AuthLayout:Replacement}:{}} providers={provider?[{id:'fixture',label:'Fixture provider',onSelect:async()=>setResult('provider callback only')}]:[]} onSubmit={async({view,values})=>{if(failure)throw Error('secret diagnostic never shown');setResult(view+' callback fields: '+Object.keys(values).join(','));}}/>
+<label>Fixture view<select value={view} onChange={e=>setView(e.target.value)}>{['login','register','verify','resetRequest','reset','challenge','recovery','enroll','setPassword','enrollmentConfirm'].map(v=><option key={v}>{v}</option>)}</select></label>
+<button onClick={()=>setVariant(v=>v==='minimal'?'split':'minimal')}>Switch layout</button><button onClick={()=>setReplacement(v=>!v)}>Replace complete layout</button><button onClick={()=>setProvider(v=>!v)}>Configure fixture provider</button><button onClick={()=>setFailure(v=>!v)}>Toggle fixture failure</button><button onClick={()=>setFive(v=>!v)}>Show mock provider designs</button>
+<Auth view={view} variant={variant} onNavigate={setView} aside={null} components={replacement?{AuthLayout:Replacement}:{}} providers={five?['google','facebook','github','microsoft','apple'].map(id=>({id,label:id[0].toUpperCase()+id.slice(1),mode:'mock',onSelect:async()=>{}})):provider?[{id:'fixture',label:'Fixture provider',onSelect:async()=>setResult('provider callback only')}]:[]} onSubmit={async({view,values})=>{if(failure)throw Error('secret diagnostic never shown');setResult(view+' callback fields: '+Object.keys(values).join(','));}}/>
 <output aria-label="Fixture callback result">{result}</output></div>}
 `,
 );
@@ -129,6 +130,106 @@ try {
   await page.goto(url);
   await page.getByText("VIEW ONLY:", { exact: false }).waitFor();
   const screenshotPaths = [];
+  await page
+    .getByRole("button", { name: "Configure fixture provider" })
+    .click();
+  await page.evaluate(() => {
+    const wrapper = document.querySelector(".forma-identity").parentElement;
+    for (const name of [
+      "--app-fontFamily",
+      "--app-text",
+      "--app-accent",
+      "--app-onAccent",
+    ])
+      wrapper.style.removeProperty(name);
+  });
+  assert.ok(
+    (await page.locator(".forma-identity__button--social svg").count()) === 1,
+  );
+  await page
+    .getByRole("button", { name: "Show mock provider designs" })
+    .click();
+  assert.equal(await page.locator(".forma-identity__provider-icon").count(), 5);
+  await page.getByRole("button", { name: "Switch layout" }).click();
+  for (const [name, width] of [
+    ["desktop", 1280],
+    ["mobile", 390],
+  ]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.screenshot({
+      path: path.join(
+        root,
+        ".run/neutral-consumer",
+        `polished-split-${name}.png`,
+      ),
+      fullPage: true,
+    });
+    if (name === "desktop")
+      await page
+        .locator(".forma-identity")
+        .screenshot({
+          path: path.join(root, ".run/neutral-consumer/split-card-desktop.png"),
+        });
+    const columns = await page
+      .locator(".forma-identity")
+      .evaluate(
+        (el) => getComputedStyle(el).gridTemplateColumns.split(" ").length,
+      );
+    assert.equal(columns, width === 1280 ? 2 : 1);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "Switch layout" }).click();
+  for (const state of [
+    "login",
+    "register",
+    "verify",
+    "resetRequest",
+    "reset",
+    "challenge",
+    "recovery",
+    "enroll",
+    "setPassword",
+    "enrollmentConfirm",
+  ]) {
+    await page.getByLabel("Fixture view").selectOption(state);
+    await page.locator(".forma-identity h1").waitFor();
+    assert.ok(
+      await page
+        .locator(".forma-identity__panel")
+        .evaluate((el) => el.getBoundingClientRect().width <= 448),
+    );
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    if (state === "login")
+      await page
+        .locator(".forma-identity")
+        .screenshot({
+          path: path.join(root, ".run/neutral-consumer/polished-card.png"),
+        });
+    await page.screenshot({
+      path: path.join(root, ".run/neutral-consumer", `polished-${state}.png`),
+      fullPage: true,
+    });
+  }
+  await page.getByLabel("Fixture view").selectOption("login");
+  await page
+    .getByRole("button", { name: "Show mock provider designs" })
+    .click();
+  await page
+    .getByRole("button", { name: "Configure fixture provider" })
+    .click();
+  await page.evaluate(() => {
+    const wrapper = document.querySelector(".forma-identity").parentElement;
+    wrapper.style.setProperty("--app-fontFamily", "Georgia, serif");
+    wrapper.style.setProperty("--app-text", "rgb(31, 45, 61)");
+    wrapper.style.setProperty("--app-accent", "rgb(64, 50, 120)");
+    wrapper.style.setProperty("--app-onAccent", "rgb(255, 255, 255)");
+  });
+  await page.waitForTimeout(250); // allow configured color transition before computed-style assertions
   for (const layout of ["minimal", "split"]) {
     if (layout === "split")
       await page.getByRole("button", { name: "Switch layout" }).click();
@@ -158,6 +259,13 @@ try {
           () => document.documentElement.scrollWidth <= innerWidth,
         ),
         true,
+      );
+      assert.equal(
+        await page
+          .locator(".forma-identity__button--tertiary")
+          .first()
+          .evaluate((el) => getComputedStyle(el).color),
+        "rgb(31, 45, 61)",
       );
       const screenshot = path.join(
         root,

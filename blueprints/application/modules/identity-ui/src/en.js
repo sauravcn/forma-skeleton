@@ -1,4 +1,9 @@
 export const en = Object.freeze({
+  asideEyebrow: "YOUR WORK, CONNECTED",
+  asideTitle: "A thoughtful space for your next chapter.",
+  asideBody:
+    "Sign in to your workspace. Your team, your tools, and the work that matters — together.",
+  orContinue: "Or continue with",
   login: "Sign in",
   register: "Create account",
   name: "Name",
