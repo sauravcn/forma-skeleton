@@ -45,4 +45,19 @@ export const en = Object.freeze({
   invalid: "Complete the required fields.",
   accepted: "Check your inbox if eligible.",
   provider: "Continue with {provider}",
+  socialGoogle: "Google",
+  socialFacebook: "Facebook",
+  socialGithub: "GitHub",
+  socialMicrosoft: "Microsoft",
+  socialApple: "Apple",
+  setPassword: "Create a password for two-factor setup",
+  setPasswordHelp:
+    "Create a password before enrolling your authenticator. Social sign-in alone does not grant workspace access.",
+  mockProvider: "Continue with {provider} (MOCK)",
+  mockHelp:
+    "MOCK social sign-in uses a local test provider. It does not connect to a real social account.",
+  socialCancelled:
+    "Social sign-in was cancelled. You can try again or use your password.",
+  socialError:
+    "Social sign-in could not be completed. Try again or use your password.",
 });

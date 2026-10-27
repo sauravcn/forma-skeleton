@@ -8,6 +8,11 @@ import {
   useState,
 } from "react";
 import QRCode from "qrcode";
+import {
+  configuredMockProviders,
+  consumeSocialResult,
+  mockRedirectURL,
+} from "./social-contract.mjs";
 import AuthPresentation from "./presentation/AuthPresentation.jsx";
 import { en } from "./presentation/en.js";
 import "./presentation/styles.css";
@@ -46,6 +51,7 @@ export function IdentityProvider({ children }) {
       const value = await request("/api/identity");
       if (!value || !stages.has(value.stage))
         throw Error("identity.descriptor");
+      configuredMockProviders(value);
       if (current === sequence.current) {
         setDescriptor(value);
         setFailed(false);
@@ -122,6 +128,10 @@ export function AuthPage() {
     if (initialized.current) return;
     initialized.current = true;
     const url = new URL(window.location.href);
+    const socialResult = consumeSocialResult(url);
+    if (socialResult === "cancelled") setNotice("socialCancelled");
+    if (socialResult === "error") setError("social");
+    if (socialResult) window.history.replaceState(null, "", url.pathname);
     if (url.searchParams.has("token")) {
       setResetToken(url.searchParams.get("token"));
       setChoice("reset");
@@ -180,7 +190,12 @@ export function AuthPage() {
   else if (stage === "challenge")
     view = choice === "recovery" ? "recovery" : "challenge";
   else if (stage === "enroll")
-    view = enrollment ? "enrollmentConfirm" : "enroll";
+    view =
+      descriptor.passwordRequired === true
+        ? "setPassword"
+        : enrollment
+          ? "enrollmentConfirm"
+          : "enroll";
   async function submit({ view, values }) {
     setError(null);
     setNotice(null);
@@ -228,6 +243,11 @@ export function AuthPage() {
         setEnrollment(null);
         setChoice("login");
         await refresh();
+      } else if (view === "setPassword") {
+        await request("/api/auth/forma-set-password", {
+          newPassword: values.newPassword,
+        });
+        await refresh();
       } else if (view === "enroll") {
         const result = await request("/api/auth/two-factor/enable", {
           password: values.currentPassword,
@@ -271,6 +291,36 @@ export function AuthPage() {
       throw Error("identity.request");
     }
   }
+  const providers = configuredMockProviders(descriptor || {}).map(
+    (provider) => ({
+      ...provider,
+      label: en[provider.labelKey],
+      onSelect: async () => {
+        setError(null);
+        setNotice(null);
+        try {
+          const callbackURL = new URL("" + "/auth", window.location.origin)
+            .href;
+          const result = await request("/api/auth/sign-in/social", {
+            provider: provider.id,
+            callbackURL,
+            errorCallbackURL: callbackURL,
+            disableRedirect: true,
+          });
+          window.location.assign(
+            mockRedirectURL(result, {
+              origin: window.location.origin,
+              basePath: "",
+              providerId: provider.id,
+            }),
+          );
+        } catch {
+          setError("social");
+          throw Error("identity.request");
+        }
+      },
+    }),
+  );
   if (!descriptor)
     return (
       <main>
@@ -309,7 +359,7 @@ export function AuthPage() {
         enrollmentDetails={enrollment ? { ...enrollment, qrDataURL } : null}
         noticeCode={notice}
         errorCode={error}
-        providers={[]}
+        providers={providers}
       />
       {error && (
         <button type="button" onClick={() => refresh().catch(() => {})}>
