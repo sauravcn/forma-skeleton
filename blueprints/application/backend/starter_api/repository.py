@@ -54,6 +54,13 @@ class Repository:
         connection = sqlite3.connect(self.database, timeout=10)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys=ON")
+        if connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='forma_store_manifest'"
+        ).fetchone():
+            connection.close()
+            raise RuntimeError(
+                "Public source refuses an explicitly owned authenticated store"
+            )
         try:
             if write:
                 connection.execute("BEGIN IMMEDIATE")

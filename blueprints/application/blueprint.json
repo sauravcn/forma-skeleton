@@ -6,9 +6,9 @@
   "requiredModules": ["presentation", "localization", "navigation", "records"],
   "source": [],
   "capabilities": {
-    "authModes": ["none"],
+    "authModes": ["none", "password"],
     "providers": [],
-    "twoFactor": false,
+    "twoFactor": true,
     "extensions": false
   },
   "modules": [
@@ -49,6 +49,50 @@
           "to": "backend"
         }
       ]
+    },
+    {
+      "id": "identity",
+      "kind": "foundation",
+      "version": "0.1.0",
+      "requires": ["presentation", "localization"],
+      "source": [
+        {
+          "from": "modules/identity/runtime",
+          "to": "identity"
+        }
+      ]
+    },
+    {
+      "id": "records-auth",
+      "kind": "domain",
+      "version": "0.1.0",
+      "requires": ["identity", "records"],
+      "source": [
+        {
+          "from": "modules/records-auth/runtime",
+          "to": "backend-auth"
+        }
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "id": "public",
+      "auth": {
+        "mode": "none",
+        "providers": [],
+        "twoFactor": false
+      },
+      "modules": []
+    },
+    {
+      "id": "password-totp",
+      "auth": {
+        "mode": "password",
+        "providers": [],
+        "twoFactor": true
+      },
+      "modules": ["identity", "records-auth"]
     }
   ]
 }

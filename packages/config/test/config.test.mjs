@@ -200,3 +200,32 @@ test("semantic parent token registry matches generator schema and runtime valida
     assert.throws(() => themeStyle(bad.theme));
   }
 });
+
+test("fixed authenticated profile resolves physical module closure and rejects downgrade tuples", () => {
+  const config = defaultConfig();
+  config.auth = { mode: "password", providers: [], twoFactor: true };
+  const result = validateConfig(config, manifest());
+  assert.ok(result.modules.includes("identity"));
+  assert.ok(result.modules.includes("records-auth"));
+  assert.deepEqual(config.modules, defaultConfig().modules);
+  for (const auth of [
+    { mode: "password", providers: [], twoFactor: false },
+    { mode: "social", providers: ["google"], twoFactor: true },
+    { mode: "password", providers: ["google"], twoFactor: true },
+  ])
+    assert.throws(
+      () => validateConfig({ ...config, auth }, manifest()),
+      /profile/,
+    );
+  assert.throws(
+    () =>
+      validateConfig(
+        { ...defaultConfig(), modules: [...config.modules, "identity"] },
+        manifest(),
+      ),
+    /Public profile/,
+  );
+  const bad = manifest();
+  bad.profiles[1].modules.push("unknown");
+  assert.throws(() => validateBlueprint(bad), /Unknown profile/);
+});

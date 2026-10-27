@@ -1,0 +1,11 @@
+# Working on this generated authenticated application
+
+Read README.md, app.config.json, blueprint.lock.json, SOURCE_MANIFEST.json, identity and backend-auth documentation before editing. Preserve dirty work. No permanent agent, live mail/provider, production hosting, payment, license grant or AI capability is implied.
+
+This fixed source profile requires password plus confirmed authenticator/recovery session assurance. Config-only downgrades must fail. `identity/` owns physically copied maintained-library integration, server/session controller and replaceable frontend presentation; `backend-auth/` owns records policy, scoped SQLite service and additive ownership migration. `backend/` retains original validation/parser source and public tests; its public repository must refuse authenticated stores. Domain roles/permissions never belong in generic foundation code.
+
+Run npm ci, npm test and npm run build. Explicit fresh-store setup with npm run migrate precedes npm start/dev. Consult .env.example and identity docs for exported PostgreSQL, SQLite, origin, secret and SMTP settings; authenticated entrypoints optionally load ignored local .env (the example itself is not loaded). Never copy a customer's runtime store, owner Google secret, other customer's fork or credentials into tests, prompts, logs or Git.
+
+Every record API request checks current maintained session, server proof, scope, role and owner. Hidden navigation, enrollment flags and browser-supplied IDs never authorize. Keep native behavior/security callbacks and accessibility while replacing components/layouts. Keep complete English text and stable untranslated IDs. URI/recovery/reset/verification/cookie values are credentials: no storage, screenshots or diagnostics containing them.
+
+Do not edit applied migration SQL/checksums, adopt unmarked populated stores, promote the first signup or rewrite customer modifications. Source provenance records the generated baseline, not a promise of automatic upgrades. Changes require reviewed diffs, relevant test/build and actual browser/API denial checks. Standalone install and maintained identity E2E are distinct from component fixtures. No public deployment, paid service or data reset is authorized by this file.

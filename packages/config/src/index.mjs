@@ -82,6 +82,26 @@ export function validateBlueprint(manifest) {
       module.requires.some((id) => byId.get(id)?.kind === "domain")
     )
       fail("Foundation modules cannot depend on domain policy");
+  const profileIds = new Set();
+  for (const profile of manifest.profiles || []) {
+    if (profileIds.has(profile.id)) fail("Duplicate profile ID");
+    profileIds.add(profile.id);
+    if (profile.modules.some((id) => !byId.has(id)))
+      fail("Unknown profile module");
+    if (
+      (profile.id === "public" &&
+        (profile.auth.mode !== "none" ||
+          profile.auth.twoFactor ||
+          profile.modules.length)) ||
+      (profile.id === "password-totp" &&
+        (profile.auth.mode !== "password" ||
+          !profile.auth.twoFactor ||
+          !["identity", "records-auth"].every((id) =>
+            profile.modules.includes(id),
+          )))
+    )
+      fail("Invalid fixed authentication profile contract");
+  }
   const outputs = [];
   for (const mapping of [
     ...manifest.source,
@@ -157,7 +177,23 @@ export function validateConfig(value, manifest) {
     fail("App name must be nonempty trimmed text");
   if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(value.id))
     fail("Reserved app ID");
-  const selected = resolveModules(manifest, value.modules);
+  const profiles = manifest.profiles;
+  const profile = profiles?.find(
+    (candidate) =>
+      candidate.auth.mode === value.auth.mode &&
+      candidate.auth.twoFactor === value.auth.twoFactor &&
+      JSON.stringify(candidate.auth.providers) ===
+        JSON.stringify(value.auth.providers),
+  );
+  if (profiles && !profile) fail("Unsupported authentication profile tuple");
+  if (
+    profile?.id === "public" &&
+    value.modules.some((id) => ["identity", "records-auth"].includes(id))
+  )
+    fail("Public profile cannot include authenticated runtime modules");
+  const selected = resolveModules(manifest, [
+    ...new Set([...value.modules, ...(profile?.modules || [])]),
+  ]);
   const ids = new Set(selected.map((m) => m.id));
   for (const id of manifest.requiredModules)
     if (!ids.has(id)) fail(`Required baseline module missing: ${id}`);
