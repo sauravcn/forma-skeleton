@@ -1,5 +1,7 @@
 /** Private maintained identity candidate; generated integration has separate acceptance. */
 import { betterAuth } from "better-auth";
+import { genericOAuth } from "better-auth/plugins/generic-oauth";
+import { assertMockOAuth } from "./mock-oauth.mjs";
 import { getMigrations } from "better-auth/db/migration";
 import { username } from "better-auth/plugins/username";
 import { twoFactor } from "better-auth/plugins/two-factor";
@@ -18,6 +20,8 @@ export function createPasswordIdentity({
   secret,
   appId,
   publicOrigin,
+  authBasePath = "/api/auth",
+  cookiePath = "/",
   sendMail,
   onDeliveryFailure,
   verificationExpiresIn = 3600,
@@ -26,6 +30,7 @@ export function createPasswordIdentity({
   organizationId,
   permissionPolicy,
   onVerifiedUser,
+  mockOAuth = null,
 }) {
   if (typeof sendMail !== "function")
     throw new Error("Explicit mail transport is required");
@@ -127,10 +132,27 @@ export function createPasswordIdentity({
     enableTotp,
     requireMfa,
     permissionPolicy,
+    providerDescriptors: mockOAuth?.descriptors || [],
   });
+  if (
+    !/^\/[a-z0-9/-]+$/.test(authBasePath) ||
+    !authBasePath.endsWith("/api/auth") ||
+    !cookiePath.startsWith("/") ||
+    cookiePath.includes(";") ||
+    /[\r\n]/.test(cookiePath)
+  )
+    throw new Error("Explicit safe auth base/cookie paths required");
+  const normalizedRoute = (url) => {
+    const route = new URL(url).pathname;
+    return route.startsWith(authBasePath + "/")
+      ? "/api/auth" + route.slice(authBasePath.length)
+      : route;
+  };
+  if (mockOAuth) assertMockOAuth(mockOAuth, publicOrigin, authBasePath);
   const options = {
     appName: appId,
     baseURL: publicOrigin,
+    basePath: authBasePath,
     secret,
     database: pool,
     trustedOrigins: [publicOrigin],
@@ -157,6 +179,7 @@ export function createPasswordIdentity({
       sendVerificationEmail: deliver("verification"),
     },
     plugins: [
+      ...(mockOAuth ? [genericOAuth({ config: mockOAuth.configs })] : []),
       ...(enableTotp
         ? [
             twoFactor({
@@ -183,6 +206,7 @@ export function createPasswordIdentity({
     session: { cookieCache: { enabled: false }, expiresIn: 3600 },
     advanced: {
       cookiePrefix: `${appId}-candidate`,
+      defaultCookieAttributes: { path: cookiePath },
       ipAddress: { ipAddressHeaders: ["x-forma-socket-ip"] },
     },
     rateLimit: { enabled: true, storage: "database", window: 60, max: 100 },
@@ -195,7 +219,7 @@ export function createPasswordIdentity({
         const emailRequest = [
           "/api/auth/request-password-reset",
           "/api/auth/send-verification-email",
-        ].includes(new URL(request.url).pathname);
+        ].includes(normalizedRoute(request.url));
         if (emailRequest && response.ok) {
           const headers = new Headers(response.headers);
           headers.delete("content-length");
@@ -211,7 +235,9 @@ export function createPasswordIdentity({
     });
   }
   const guardedHandler = toNodeHandler(async (request) => {
-    const route = new URL(request.url).pathname;
+    const route = normalizedRoute(request.url);
+    const setupRoute = route === "/api/auth/forma-set-password";
+    const socialRoute = route === "/api/auth/sign-in/social";
     const factorRoute = route.startsWith("/api/auth/two-factor/");
     if (factorRoute && new URL(request.url).search)
       return Response.json(
@@ -222,6 +248,8 @@ export function createPasswordIdentity({
       request.method !== "POST" ||
       (route !== "/api/auth/sign-up/email" &&
         !factorRoute &&
+        !setupRoute &&
+        !socialRoute &&
         !(
           enableTotp &&
           ["/api/auth/sign-in/email", "/api/auth/sign-in/username"].includes(
@@ -269,6 +297,37 @@ export function createPasswordIdentity({
         { code: "UNSUPPORTED_FACTOR_OPTION" },
         { status: 400 },
       );
+    if (setupRoute || socialRoute) {
+      const allowed = setupRoute
+        ? ["newPassword"]
+        : ["provider", "callbackURL", "errorCallbackURL", "disableRedirect"];
+      if (
+        !mockOAuth ||
+        !body ||
+        typeof body !== "object" ||
+        Array.isArray(body) ||
+        Object.keys(body).some((key) => !allowed.includes(key)) ||
+        (socialRoute &&
+          (!mockOAuth.descriptors.some((item) => item.id === body.provider) ||
+            body.disableRedirect !== true ||
+            [body.callbackURL, body.errorCallbackURL].some(
+              (value) =>
+                value !==
+                `${publicOrigin}${authBasePath.slice(0, -"/api/auth".length)}/auth`,
+            )))
+      )
+        return Response.json(
+          { code: "MOCK_OAUTH_UNSUPPORTED" },
+          { status: 400 },
+        );
+      return maintained(
+        new Request(request.url, {
+          method: request.method,
+          headers: request.headers,
+          body: text,
+        }),
+      );
+    }
     if (!factorRoute && route !== "/api/auth/sign-up/email")
       return maintained(
         new Request(request.url, {
