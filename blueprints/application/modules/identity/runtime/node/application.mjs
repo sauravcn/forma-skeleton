@@ -28,8 +28,21 @@ async function components(options) {
   const policy = await import(
     pathToFileURL(path.join(settings.projectRoot, "backend-auth/policy.mjs"))
   );
+  const { createMockOAuth } = await import(
+    pathToFileURL(
+      path.join(
+        settings.projectRoot,
+        "identity/core/lifecycle/src/mock-oauth.mjs",
+      ),
+    )
+  );
+  const mockOAuth = createMockOAuth({
+    publicOrigin: settings.publicOrigin,
+    env: options.env || process.env,
+  });
   const identity = createPasswordIdentity({
     ...settings,
+    mockOAuth,
     enableTotp: true,
     requireMfa: true,
     permissionPolicy: policy.permissionPolicy,
@@ -37,7 +50,7 @@ async function components(options) {
     sendMail: options.sendMail,
     onDeliveryFailure: options.onDeliveryFailure,
   });
-  return { settings, identity, policy };
+  return { settings, identity, policy, mockOAuth };
 }
 function pythonEnvironment(settings, env, cookieName) {
   return {
@@ -114,7 +127,14 @@ async function freePort(port) {
   await new Promise((resolve) => probe.close(resolve));
 }
 export async function createApplication(options) {
-  const { settings, identity, policy } = await components(options);
+  if (
+    (options.env || process.env).FORMA_MOCK_OAUTH === "1" &&
+    options.dev !== true
+  )
+    throw new Error(
+      "Local MOCK OAuth requires dev:true; production serving is disabled",
+    );
+  const { settings, identity, policy, mockOAuth } = await components(options);
   const env = options.env || process.env;
   let nextApp,
     server,
@@ -143,6 +163,7 @@ export async function createApplication(options) {
       if (nextApp) tasks.push(Promise.resolve().then(() => nextApp.close()));
       tasks.push(stop(backend), identity.close());
       await Promise.allSettled(tasks);
+      mockOAuth?.close();
       if (lease) {
         for (const key of configuredKeys) {
           if (envSnapshot[key] === undefined) delete process.env[key];
@@ -296,6 +317,7 @@ export async function createApplication(options) {
             res.end();
             return;
           }
+          if (mockOAuth && (await mockOAuth.handle(req, res))) return;
           const target = new URL(req.url, settings.publicOrigin);
           if (target.pathname === "/internal/identity") {
             if (req.method !== "GET" || target.search) {

@@ -36,6 +36,7 @@ export function createAssurance({
   enableTotp,
   requireMfa,
   permissionPolicy,
+  providerDescriptors = [],
 }) {
   async function initialize({ migrate = true } = {}) {
     if (migrate)
@@ -101,30 +102,86 @@ export function createAssurance({
   }
   const plugin = {
     id: "forma-session-assurance",
+    rateLimit: [
+      {
+        pathMatcher: (path) => path === "/forma-set-password",
+        window: 60,
+        max: 5,
+      },
+    ],
     endpoints: {
+      formaSetPassword: createAuthEndpoint(
+        "/forma-set-password",
+        { method: "POST", requireHeaders: true },
+        async (ctx) => {
+          if (!providerDescriptors.length)
+            throw new APIError("NOT_FOUND", {
+              message: "Mock setup unavailable",
+            });
+          const state = requestState.getStore();
+          if (
+            !state ||
+            !ctx.body ||
+            Object.keys(ctx.body).some((key) => key !== "newPassword") ||
+            typeof ctx.body.newPassword !== "string"
+          )
+            throw new APIError("BAD_REQUEST", {
+              message: "Invalid password setup",
+            });
+          let current = await getAuth().api.getSession({
+            headers: ctx.headers,
+            query: { disableCookieCache: true, disableRefresh: true },
+          });
+          if (!current?.user?.emailVerified)
+            throw new APIError("UNAUTHORIZED", {
+              message: "Verified session required",
+            });
+          await acquire(state, current.user.id);
+          current = await getAuth().api.getSession({
+            headers: ctx.headers,
+            query: { disableCookieCache: true, disableRefresh: true },
+          });
+          if (!current?.user?.emailVerified || current.user.twoFactorEnabled)
+            throw new APIError("FORBIDDEN", {
+              message: "Initial password setup only",
+            });
+          return getAuth().api.setPassword({
+            headers: ctx.headers,
+            body: { newPassword: ctx.body.newPassword },
+          });
+        },
+      ),
       formaDescriptor: createAuthEndpoint(
         "/forma-state",
         { method: "GET", requireHeaders: true },
         async (ctx) => {
+          const describe = (value) =>
+            ctx.json({ ...value, providers: providerDescriptors });
           const current = await getAuth().api.getSession({
             headers: ctx.headers,
             query: { disableCookieCache: true, disableRefresh: true },
           });
           if (current?.user) {
             if (!current.user.emailVerified)
-              return ctx.json({ stage: "forbidden" });
+              return describe({ stage: "forbidden" });
             if (!current.user.twoFactorEnabled)
-              return ctx.json({
+              return describe({
                 stage: "enroll",
+                passwordRequired: !(
+                  await pool.query(
+                    'SELECT 1 FROM account WHERE "userId"=$1 AND "providerId"=\'credential\' AND password IS NOT NULL',
+                    [current.user.id],
+                  )
+                ).rowCount,
                 user: { name: current.user.name },
               });
             if (!(await hasProof(current)))
-              return ctx.json({
+              return describe({
                 stage: "challenge",
                 user: { name: current.user.name },
               });
             const result = await introspect(ctx.headers.get("cookie") || "");
-            return ctx.json({
+            return describe({
               stage: result.status === 200 ? "authenticated" : "forbidden",
               user: { name: current.user.name },
             });
@@ -137,9 +194,9 @@ export function createAssurance({
             const record =
               await ctx.context.internalAdapter.findVerificationValue(signed);
             if (record && new Date(record.expiresAt) > new Date())
-              return ctx.json({ stage: "challenge" });
+              return describe({ stage: "challenge" });
           }
-          return ctx.json({ stage: "signed-out" });
+          return describe({ stage: "signed-out" });
         },
       ),
     },
