@@ -27,7 +27,8 @@
     "test:presentation-accessibility": "node tests/blueprint-consumers/run-presentation-accessibility.mjs",
     "test:theme-contract": "node tests/blueprint-consumers/run-theme-contract.mjs",
     "test:authenticated-consumer": "node tests/blueprint-consumers/run-authenticated.mjs",
-    "test:social-presentation": "node --test tests/blueprint-consumers/test-social-presentation.mjs"
+    "test:social-presentation": "node --test tests/blueprint-consumers/test-social-presentation.mjs",
+    "test:mock-social-consumer": "node tests/blueprint-consumers/run-mock-social.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",
