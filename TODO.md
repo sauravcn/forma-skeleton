@@ -1,10 +1,17 @@
 # Repository decisions and next steps
 
+
+## Verified authentication main delivery — October 27, 2026
+
+Canonical PR14 [Aarav] is MERGED; fetched functional main 9858b1a3ca10e377a3a05ffdaf5dcb468bd2ae39 matched the tested source. Application role PR24/25/26 and complete PR27 are MERGED; functional main a61a297bf1ce6ebb92616485efff43e722004aec matched its accepted tree. FORMA0229–0233 are Done in their defined scopes: polished source-owned defaults/twelve themes, exactrender/protocol/distribution acceptance and single-developer Kernel assessment only. Broader commercial/live-provider/production work stays open. Later notes-only main commits may follow; fetch current tips.
+
+Actual previewgallery/acceptance/local-refresh instructions are in the application repo docs/design/authentication and current HANDOFF. Pulling main alone does not refresh a local launcher's preserved source copies; use stopped-only refresh-source per initialized app without replacing accounts/data. Source, tests, screenshots and notes are Git-backed; ignored runtime data/processes/privatearchives are not. No live provider, publicnpm, paidservice or deployment.
+
 ## Polished canonical authentication — October 27, 2026
 
 FORMA-0230 redesigns the source-owned authentication component foundation: compact default minimal/split layouts, meaningful default supporting panel, local provider vector marks, semantic primary/social/tertiary actions, theme inheritance and all ten maintained form states. Keyboard/error focus and secret-clearing callbacks remain intact; initial heading autofocus is removed. Four whole-message keys extend the validated catalog. The app repo physically copies this source, retains app-specific operator wording and owns twelve distinct domain compositions.
 
-Actual gates passed: installed neutral consumer, exact controlled all-ten-state desktop/mobile/default/replacement/parent inheritance/secret-clearing proof, social contract tests and freshly generated maintained PostgreSQL/mock OAuth/password/TOTP/recovery consumer. App repo has264 view/stress cases plus sampled contrast, fresh protected Care/Table flows, all12 independent packed builds and final source comparisons with explicit copy/docs-only delta scopes. Main integration/remote verification is pending; do not infer live external providers, production or exhaustive accessibility acceptance. The single tracker and real screenshot gallery/acceptance/local memo are in forma-kernel-care-center docs/design/authentication.
+Actual gates passed: installed neutral consumer, exact controlled all-ten-state desktop/mobile/default/replacement/parent inheritance/secret-clearing proof, social contract tests and freshly generated maintained PostgreSQL/mock OAuth/password/TOTP/recovery consumer. App repo has264 view/stress cases plus sampled contrast, fresh protected Care/Table flows, all12 independent packed builds and final source comparisons with explicit copy/docs-only delta scopes. Canonical source and application integration are now merged and tree-verified (latest verified section above); do not infer live external providers, production or exhaustive accessibility acceptance. The single tracker and real screenshot gallery/acceptance/local memo are in forma-kernel-care-center docs/design/authentication.
 
 Module README documents full layout/field/button replacement and semantic action variants. Buyers receive selected physical source; neither private seller repo is a runtime dependency. No public npm, paid service, owner secret/database copying or deployment. Stop and explicitly refresh initialized local source copies to see new visuals without replacing data.
 
