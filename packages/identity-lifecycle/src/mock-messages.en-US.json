@@ -1,0 +1,10 @@
+{
+  "title": "{provider} MOCK sign-in",
+  "notice": "Local test provider. Synthetic identities only. This is not {provider}.",
+  "account": "Synthetic account",
+  "primary": "Synthetic primary account",
+  "alternate": "Synthetic alternate account",
+  "collision": "Synthetic collision account (link refusal test)",
+  "approve": "Approve MOCK sign-in",
+  "cancel": "Cancel MOCK sign-in"
+}
