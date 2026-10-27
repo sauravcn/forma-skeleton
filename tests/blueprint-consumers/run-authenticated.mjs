@@ -22,7 +22,14 @@ const directory = await fs.mkdtemp(
 );
 const artifacts = path.join(repository, ".run/authenticated-consumer");
 await fs.mkdir(artifacts, { recursive: true });
-await fs.writeFile(path.join(artifacts, "report.json"), JSON.stringify({ complete: false, checks: [], recorded: new Date().toISOString() }));
+await fs.writeFile(
+  path.join(artifacts, "report.json"),
+  JSON.stringify({
+    complete: false,
+    checks: [],
+    recorded: new Date().toISOString(),
+  }),
+);
 const environment = {
   ...process.env,
   npm_config_cache:
@@ -235,7 +242,8 @@ try {
     assert.ok(files.includes(required), `Missing complete source: ${required}`);
   for (const file of files) {
     assert.ok(
-      (path.basename(file) === ".env.example" || !/(^|\/)\.env($|\.)|\.(db|sqlite3?|pem|key)$/.test(file)),
+      path.basename(file) === ".env.example" ||
+        !/(^|\/)\.env($|\.)|\.(db|sqlite3?|pem|key)$/.test(file),
       "No runtime secret/store artifacts",
     );
     if (/\.(mjs|js|jsx|json|py)$/.test(file)) {
@@ -288,6 +296,24 @@ try {
     new URL(page.url()).pathname.startsWith("/auth"),
     "Protected page redirects unsigned users",
   );
+  await page.getByRole("heading", { name: "Sign in", exact: true }).waitFor();
+  await page.screenshot({
+    path: path.join(artifacts, "authenticated-login-desktop.png"),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByLabel("Email or username", { exact: true }).waitFor();
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+    "Mobile login has no document overflow",
+  );
+  await page.screenshot({
+    path: path.join(artifacts, "authenticated-login-mobile.png"),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1280, height: 800 });
   const missing = await context.request.get(`${origin}/api/records`);
   assert.equal(missing.status(), 401);
   checks.push("unsigned protected page and direct records API deny");
@@ -339,7 +365,9 @@ try {
       .fill(user.password);
     await continueForm();
     await heading("Confirm authenticator setup");
-    const encoded = await page.getByLabel("Manual authenticator setup key", {exact: true}).inputValue();
+    const encoded = await page
+      .getByLabel("Manual authenticator setup key", { exact: true })
+      .inputValue();
     secrets.add(encoded);
     const key = new TextDecoder().decode(base32.decode(encoded));
     secrets.add(key);
@@ -494,7 +522,6 @@ try {
     "real reset link/password replacement, renewed TOTP and retained owner records",
   );
   complete = true;
-  console.log("Authenticated installed-consumer browser release checks passed");
 } finally {
   await browser?.close();
   for (const child of tasks) {
@@ -513,6 +540,10 @@ try {
     assert.ok(
       !logs.some((output) => output.includes(secret)),
       "Sensitive token/credential appeared in subprocess output",
+    );
+  if (complete)
+    console.log(
+      "Authenticated installed-consumer browser release checks passed after cleanup and output audit",
     );
   // Only safe operational evidence is persisted; no URLs with tokens/cookies.
   await fs.writeFile(
