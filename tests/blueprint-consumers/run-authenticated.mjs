@@ -13,6 +13,12 @@ import { createOTP } from "@better-auth/utils/otp";
 import { base32 } from "@better-auth/utils/base32";
 import { chromium } from "playwright";
 import { disposablePostgres } from "./fixtures/disposable-postgres.mjs";
+import {
+  observeClose,
+  stopOwnedChildren,
+  portIsOpen,
+  safeFailureKind,
+} from "./fixtures/consumer-safety.mjs";
 const repository = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -53,6 +59,8 @@ const logs = [];
 const checks = [];
 let postgres, browser, service;
 let complete = false;
+let failure;
+const ownedPorts = new Set();
 const tasks = new Set();
 function run(command, args, cwd) {
   return new Promise((resolve, reject) => {
@@ -63,6 +71,7 @@ function run(command, args, cwd) {
       stdio: ["ignore", "pipe", "pipe"],
     });
     tasks.add(child);
+    observeClose(child);
     let output = "";
     child.stdout.on("data", (data) => {
       output += data;
@@ -80,7 +89,7 @@ function run(command, args, cwd) {
       tasks.delete(child);
       reject(error);
     });
-    child.once("exit", (code) => {
+    child.once("close", (code) => {
       clearTimeout(timer);
       tasks.delete(child);
       logs.push(output);
@@ -117,7 +126,11 @@ async function startFixture(projectRoot, env, migrate = false) {
     stdio: ["ignore", "pipe", "pipe", "ipc"],
   });
   tasks.add(child);
+  observeClose(child);
   const messages = [];
+  child.once("error", () =>
+    messages.push({ type: "failure", name: "ProcessError" }),
+  );
   let output = "";
   child.stdout.on("data", (data) => {
     output += data;
@@ -131,7 +144,7 @@ async function startFixture(projectRoot, env, migrate = false) {
       for (const field of ["token", "url"])
         if (message.message[field]) secrets.add(message.message[field]);
   });
-  child.once("exit", () => {
+  child.once("close", () => {
     tasks.delete(child);
     logs.push(output);
   });
@@ -266,6 +279,8 @@ try {
   const port = await freePort();
   let apiPort = await freePort();
   while (apiPort === port) apiPort = await freePort();
+  ownedPorts.add(port);
+  ownedPorts.add(apiPort);
   const origin = `http://127.0.0.1:${port}`;
   const secret = randomBytes(32).toString("hex");
   secrets.add(secret);
@@ -325,8 +340,16 @@ try {
     name: "Alpha",
     password,
   };
-  const heading = (text) =>
-    page.getByRole("heading", { name: text, exact: true }).waitFor();
+  async function rememberCookies() {
+    for (const cookie of await context.cookies()) {
+      secrets.add(cookie.value);
+      secrets.add(`${cookie.name}=${cookie.value}`);
+    }
+  }
+  const heading = async (text) => {
+    await page.getByRole("heading", { name: text, exact: true }).waitFor();
+    await rememberCookies();
+  };
   const continueForm = () =>
     page.getByRole("button", { name: "Continue", exact: true }).click();
   async function login(identifier, value = password) {
@@ -382,10 +405,12 @@ try {
     await page.getByLabel("Authentication code", { exact: true }).fill(code);
     await continueForm();
     await page.waitForURL(origin + "/");
+    await rememberCookies();
     assert.equal(
       (await context.request.get(`${origin}/api/identity`)).status(),
       200,
     );
+    await rememberCookies();
     return { otp, lastCode: code, recovery };
   }
   const alpha = await register(credentials);
@@ -407,6 +432,7 @@ try {
     (item) => item.title === "Private synthetic alpha record",
   );
   assert.ok(record);
+  await rememberCookies();
   const activeCookies = await context.cookies();
   const stolenCookie = activeCookies
     .map(({ name, value }) => `${name}=${value}`)
@@ -439,6 +465,7 @@ try {
     .fill(alpha.recovery[0]);
   await continueForm();
   await page.waitForURL(origin + "/");
+  await rememberCookies();
   checks.push(
     "actual password first-factor challenge and single recovery-code sign-in",
   );
@@ -514,6 +541,7 @@ try {
   await page.getByLabel("Authentication code", { exact: true }).fill(fresh);
   await continueForm();
   await page.waitForURL(origin + "/");
+  await rememberCookies();
   const retained = await (
     await context.request.get(`${origin}/api/records`)
   ).json();
@@ -521,37 +549,56 @@ try {
   checks.push(
     "real reset link/password replacement, renewed TOTP and retained owner records",
   );
+  await rememberCookies();
   complete = true;
+} catch (error) {
+  failure = safeFailureKind(error);
+  complete = false;
 } finally {
-  await browser?.close();
-  for (const child of tasks) {
-    try {
-      process.kill(-child.pid, "SIGTERM");
-    } catch {}
+  try {
+    await browser?.close();
+  } catch {
+    failure ||= "BrowserCleanupError";
   }
-  if (tasks.size) await new Promise((resolve) => setTimeout(resolve, 500));
-  for (const child of tasks) {
-    try {
-      process.kill(-child.pid, "SIGKILL");
-    } catch {}
+  try {
+    await stopOwnedChildren(tasks);
+  } catch {
+    failure ||= "ProcessCleanupError";
   }
-  await postgres?.close();
+  for (const port of ownedPorts)
+    if (await portIsOpen(port)) failure ||= "PortCleanupError";
+  try {
+    await postgres?.close();
+  } catch {
+    failure ||= "DatabaseCleanupError";
+  }
   for (const secret of secrets)
-    assert.ok(
-      !logs.some((output) => output.includes(secret)),
-      "Sensitive token/credential appeared in subprocess output",
-    );
-  if (complete)
-    console.log(
-      "Authenticated installed-consumer browser release checks passed after cleanup and output audit",
-    );
+    if (secret && logs.some((output) => output.includes(secret)))
+      failure ||= "SensitiveOutputError";
+  complete = complete && !failure;
   // Only safe operational evidence is persisted; no URLs with tokens/cookies.
   await fs.writeFile(
     path.join(artifacts, "report.json"),
     JSON.stringify(
-      { complete, checks, directory, recorded: new Date().toISOString() },
+      {
+        complete,
+        failure,
+        checks,
+        directory,
+        recorded: new Date().toISOString(),
+      },
       null,
       2,
     ),
   );
 }
+
+if (!complete) {
+  console.error(
+    `Authenticated consumer failed (${failure || "Error"}); raw diagnostics withheld to protect transient credentials`,
+  );
+  process.exitCode = 1;
+} else
+  console.log(
+    "Authenticated installed-consumer passed after awaited cleanup, closed-port and output-secret audit",
+  );

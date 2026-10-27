@@ -16,3 +16,8 @@ Current confirmed blocker: an unauthenticated HTTPS probe to api.github.com fail
 Owner explicitly accepts the shared sauravcn GitHub identity and requires one PR per agent work item. PR title format is `FORMA-NNNN [Aarav|Saurya|Shreesh|Codex] Concrete change`. The role label identifies the contributing AI engineer; it is not a forged Git author/account. Each PR body names the implementer and peer reviewer, links its numbered ticket, records actual review findings/fixes and relevant test evidence, and links prerequisites. Sequence: agent implementation → actual peer source review → review findings recorded on that PR → Codex integration merge after checks. A self-approval cannot stand in for peer review; shared-account limitations do not waive the review trail. Use ordinary PR comments for attributed AI review when native independent approval is unavailable.
 
 Current unmerged combined commits are a recovery backup. Preserve that backup when preparing scoped agent branches/PRs; do not rewrite pushed history, manufacture empty retrospective PRs or claim older main commits had PR review. Native PR creation currently remains blocked by the confirmed network prerequisite.
+
+
+## Access restored after publication
+
+The owner published the saved network change. HTTPS/API now return200 and existing injected authorization reports admin/push on both repositories; no replacement token was needed. Earlier blocked-access paragraphs above describe the resolved incident. Actual per-agent PR creation is now available; record real PR URLs/reviews/merge commits in the board and handoff.

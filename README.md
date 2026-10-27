@@ -2,12 +2,12 @@
 
 Forma's source-owned application blueprint and local app generator. The owner selected this repository as the blueprint source home; existing business apps and the [single numbered tracker](https://github.com/sauravcn/forma-kernel-care-center/blob/feature/cloud-functional-apps/tracking/BOARD.md) remain in `forma-kernel-care-center`.
 
-Two development profiles are implemented on the integration feature branch:
+Two development profiles are implemented:
 
 - **public**: synthetic, no authentication, SQLite records.
 - **password-totp**: maintained username/email/password verification/reset, mandatory authenticator TOTP/recovery, server-verified sessions and owner-scoped records. Identity uses an explicitly configured isolated PostgreSQL store; domain records use a separately scoped SQLite store.
 
-The actual independently generated authenticated app passed installed-package/browser acceptance with private synthetic mail capture. This proves the tested development flows, not live email delivery, social sign-in, production hosting or a security certification. Final review and PR integration are tracked separately. Providers remain absent; unsupported combinations fail before output. The CLI is a locally packed private distribution, not a published npm package.
+The actual independently generated authenticated app passed installed-package/browser acceptance with private synthetic mail capture. This proves the tested development flows, not live email delivery, social sign-in, production hosting or a security certification. Per-agent review and integration are recorded in GitHub PR history. Providers remain absent; unsupported combinations fail before output. The CLI is a locally packed private distribution, not a published npm package.
 
 ## Generate a complete child
 
@@ -59,4 +59,4 @@ Actual generated-app captures: [desktop sign-in](docs/screenshots/authenticated-
 
 Read [AGENTS.md](AGENTS.md), [TODO.md](TODO.md), [HANDOFF.md](HANDOFF.md), [TRACKING.md](TRACKING.md) and the [standalone contract](docs/architecture/standalone-contract.md). The user-named AI roles Aarav, Saurya and Shreesh work under Codex; they are active-task roles, not permanent services or independent GitHub identities. No outbound local-chat channel is verified.
 
-Earlier checkpoints used direct main pushes and have no PR history. The [new PR workflow](docs/engineering/PULL_REQUEST_WORKFLOW.md) records native PR access currently blocked separately from Git transport. New integration remains on `feature/forma-0016-generator`; do not treat a feature checkpoint as a main merge. Local development must fetch/reconcile source, board and handoff before overlapping edits. Never discard local changes or copy runtime data to reconcile code.
+Earlier checkpoints used direct main pushes and have no PR history. The [new PR workflow](docs/engineering/PULL_REQUEST_WORKFLOW.md) records the resolved network incident and required per-agent PR review sequence. The recovery snapshot remains on `feature/forma-0016-generator`; agent PRs integrate through the temporary review branch before the final reviewed main PR. Do not treat a feature checkpoint as a main merge. Local development must fetch/reconcile source, board and handoff before overlapping edits. Never discard local changes or copy runtime data to reconcile code.
