@@ -4,7 +4,7 @@ import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { pathToFileURL } from "node:url";
 import { defaultConfig, generate } from "../src/generate.mjs";
-export const help = `create-forma-app [destination] [--yes] [--id slug] [--name text]\n  [--navigation sidebar|top|combined] [--theme linen|midnight]\n  [--config app.config.json] [--dry-run]\n\nGenerates a public synthetic no-auth starter from bundled local source.\nNo registry publication, password/2FA/social login, hosting or purchase entitlement is implied.\nUse --yes for explicit defaults in noninteractive scripts. Existing destinations are refused.\n`;
+export const help = `create-forma-app [destination] [--yes] [--id slug] [--name text]\n  [--navigation sidebar|top|combined] [--theme linen|midnight]\n  [--profile public|password-totp] [--config app.config.json] [--dry-run]\n\nGenerates a public synthetic starter by default, or password+mandatory-TOTP source with --profile password-totp.\nProviders are absent. Live mail, production readiness, hosting and purchase entitlement are not implied.\nUse --yes for explicit defaults in noninteractive scripts. Existing destinations are refused.\n`;
 export async function configFromAnswers(options, ask) {
   let destination = options.destination;
   if (!destination)
@@ -37,6 +37,23 @@ export async function configFromAnswers(options, ask) {
       else config[key] = value;
     }
   }
+  if (options.profile !== undefined) {
+    if (!["public", "password-totp"].includes(options.profile))
+      throw new Error("Unknown source profile");
+    const auth =
+      options.profile === "public"
+        ? { mode: "none", providers: [], twoFactor: false }
+        : { mode: "password", providers: [], twoFactor: true };
+    if (
+      options.configFile &&
+      (config.auth?.mode !== auth.mode ||
+        config.auth?.twoFactor !== auth.twoFactor ||
+        !Array.isArray(config.auth?.providers) ||
+        config.auth.providers.length !== 0)
+    )
+      throw new Error("Explicit profile conflicts with config authentication");
+    config.auth = auth;
+  }
   return { config, destination };
 }
 export function parseArgs(argv) {
@@ -47,6 +64,7 @@ export function parseArgs(argv) {
     "--navigation": "navigation",
     "--theme": "theme",
     "--config": "configFile",
+    "--profile": "profile",
   };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];

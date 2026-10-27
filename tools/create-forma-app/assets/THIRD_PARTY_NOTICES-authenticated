@@ -1,0 +1,17 @@
+Forma authenticated development starter
+
+All required original Forma source is included physically. Generation does not
+issue a customer purchase entitlement, copyright transfer or source license grant.
+Commercial terms require a separate authorized agreement.
+
+Ordinary declared dependencies and upstream notices (retain installed licenses):
+- Next.js, React and React DOM: MIT (upstream vercel/next.js, facebook/react)
+- Better Auth and @better-auth/utils: MIT (upstream better-auth/better-auth)
+- node-postgres (pg): MIT (upstream brianc/node-postgres)
+- Nodemailer: MIT-0 (upstream nodemailer/nodemailer)
+- qrcode: MIT (upstream soldair/node-qrcode)
+
+Exact versions and transitive packages are pinned in package-lock.json. This is
+an inventory, not legal advice or a substitute for retaining package notices.
+Runtime Python/Node licenses are supplied by their distributions. No external
+QR service, live mail delivery, identity provider or paid service is included.

@@ -71,6 +71,32 @@ try {
     path.join(repo, "blueprints/application"),
     path.join(temporary, "blueprint"),
   );
+  // Canonical same-repository source becomes ordinary child-owned physical source.
+  // Snapshot hashes below cover every vendored byte; generation never needs this checkout.
+  const vendored = [
+    [
+      "packages/identity-lifecycle/src",
+      "modules/identity/runtime/core/lifecycle/src",
+    ],
+    [
+      "packages/identity-boundary/python/identity_client.py",
+      "modules/identity/runtime/core/boundary/python/identity_client.py",
+    ],
+    [
+      "blueprints/application/modules/identity-ui/src",
+      "modules/identity/runtime/frontend/presentation",
+    ],
+    [
+      "blueprints/application/backend/starter_api/migrations",
+      "modules/records-auth/runtime/migrations/base",
+    ],
+  ];
+  for (const [origin, destination] of vendored) {
+    const target = path.join(temporary, "blueprint", destination);
+    if (await exists(target))
+      throw new Error(`Vendored source collision: ${destination}`);
+    await copy(path.join(repo, origin), target);
+  }
   await copy(path.join(pkg, "assets"), path.join(temporary, "assets"));
   let revision = null,
     dirty = null;
@@ -113,6 +139,10 @@ try {
         revision,
         dirty,
         snapshotHash,
+        vendored: vendored.map(([origin, destination]) => ({
+          origin,
+          destination,
+        })),
         files,
       },
       null,

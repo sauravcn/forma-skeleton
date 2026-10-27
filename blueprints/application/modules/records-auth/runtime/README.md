@@ -1,0 +1,9 @@
+# App-owned authenticated records domain
+
+This module depends on the physically included base `backend/starter_api` source for original validation/HTTP parsing helpers and original record SQL. It uses the copied identity principal client with an explicit records permission allowlist. No Kernel or seller checkout is required. Node composition supplies the maintained identity target/cookie name and supervises the loopback Python process.
+
+Run `python3 backend-auth/migrate.py` explicitly before runtime. Required exported values: `DATABASE_PATH`, `FORMA_APP_ID`, `FORMA_ORGANIZATION_ID`. Only fresh unmarked stores without user objects may initialize. The authenticated marker binds app/org/password-totp-v1 before migrations in one SQLite transaction; original 001 and additive 002 checksums are immutable. No legacy rows are assigned to a new user. Runtime verifies marker/history without DDL and refuses missing/mismatched stores.
+
+`server.py` additionally requires `API_PORT`, `PROOF_IDENTITY_URL`, `PROOF_SESSION_COOKIE_NAME`, `FORMA_PUBLIC_ORIGIN`. Principal assurance is fixed to MFA; no caller environment/header can downgrade it. All record requests introspect again; identity failures deny. Reads/writes stay scoped to current server-derived organization and owner; explicit domain-wide permissions allow organization administrators wider access. Client owner/org fields reject rather than being trusted. Original record response fields, revisions, stale-write409 and stable IDs remain unchanged. Health discloses readiness only and needs no identity.
+
+`python3 -m unittest discover -s backend-auth/tests -v` checks disposable copied-source store/ownership/migration guards. End-to-end maintained identity/browser tests are a separate integration gate. These local development sources do not establish production transport, tenant migrations, key rotation or live mail acceptance.

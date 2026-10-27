@@ -1,0 +1,11 @@
+# Required values must be supplied by the operator; no usable secrets are shipped.
+# Export variables or create an ignored local .env; this example itself is not loaded.
+# FORMA_IDENTITY_DATABASE_URL (explicit isolated PostgreSQL URL, credentials/port/database required)
+# FORMA_AUTH_SECRET (at least 32 random characters; never commit)
+# FORMA_ORGANIZATION_ID (explicit child organization)
+# FORMA_PUBLIC_ORIGIN (exact loopback Node URL, including its port)
+# DATABASE_PATH (explicit owned SQLite path)
+# SMTP_HOST, SMTP_PORT, SMTP_SECURE=true, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+API_PORT=8765
+PYTHON_BIN=python3
+# Authentication profile is fixed password + mandatory TOTP/recovery; providers absent.

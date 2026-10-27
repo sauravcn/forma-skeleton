@@ -455,3 +455,94 @@ test("npm-style bin symlink invokes generation and preserves literal display-nam
     ),
   );
 });
+
+test("explicit authenticated profile has exact tuple and conflicts fail before assembly", async () => {
+  const requested = await configFromAnswers(
+    parseArgs(["demo-app", "--yes", "--profile", "password-totp"]),
+    () => {
+      throw Error("unexpected prompt");
+    },
+  );
+  assert.deepEqual(requested.config.auth, {
+    mode: "password",
+    providers: [],
+    twoFactor: true,
+  });
+  await assert.rejects(
+    configFromAnswers(
+      { destination: "demo-app", yes: true, profile: "unknown" },
+      () => {},
+    ),
+    /Unknown source profile/,
+  );
+});
+
+test("authenticated bundled source closes workspaces, provenance and API contract without seller imports", async (t) => {
+  const directory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "forma-auth-closure-"),
+  );
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const config = defaultConfig("closure-app", "Standalone Auth");
+  config.auth = { mode: "password", providers: [], twoFactor: true };
+  const output = path.join(directory, "child");
+  const result = await generate(config, output);
+  assert.ok(result.config.modules.includes("records-auth"));
+  const read = async (name) =>
+    JSON.parse(await fs.readFile(path.join(output, name), "utf8"));
+  const identity = await read("identity/package.json"),
+    frontend = await read("frontend/package.json");
+  assert.equal(identity.name, "@closure-app/identity");
+  for (const [name, version] of Object.entries({
+    "better-auth": "1.7.12",
+    pg: "8.23.1",
+    "@better-auth/utils": "0.5.0",
+    nodemailer: "10.2.1",
+    qrcode: "1.5.4",
+    react: "19.3.1",
+    next: "16.4.2",
+  }))
+    assert.equal(identity.dependencies[name], version);
+  assert.equal(frontend.dependencies.qrcode, "1.5.4");
+  const lock = await read("package-lock.json");
+  assert.deepEqual(lock.packages[""].workspaces, ["frontend", "identity"]);
+  assert.ok(lock.packages["node_modules/@closure-app/identity"].link);
+  const source = await read("SOURCE_MANIFEST.json");
+  assert.ok(
+    JSON.stringify(source).includes("identity/core/lifecycle/src/identity.mjs"),
+  );
+  assert.equal(
+    await fs
+      .stat(path.join(output, "identity/core/boundary/python/protected_api.py"))
+      .then(
+        () => true,
+        () => false,
+      ),
+    false,
+  );
+  assert.ok(
+    await fs.stat(
+      path.join(
+        output,
+        "identity/core/lifecycle/src/migrations/001_assurance.sql",
+      ),
+    ),
+  );
+  const contract = await read("contracts/records.openapi.json");
+  assert.equal(
+    contract.components.schemas.Health.properties.authentication.const,
+    "password-totp-v1",
+  );
+  assert.equal(
+    contract.components.securitySchemes.sessionCookie.name,
+    "closure-app-candidate.session_token",
+  );
+  assert.equal((await read("blueprint.lock.json")).profile, "password-totp");
+  assert.ok(
+    (
+      await fs.readFile(
+        path.join(output, "frontend/src/identity-server.mjs"),
+        "utf8",
+      )
+    ).includes("../../identity/node/next-adapter.mjs"),
+  );
+});

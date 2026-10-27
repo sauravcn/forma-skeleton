@@ -127,6 +127,44 @@
         "additionalProperties": false
       },
       "minItems": 1
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": ["public", "password-totp"]
+          },
+          "auth": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "enum": ["none", "password"]
+              },
+              "providers": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "twoFactor": {
+                "type": "boolean"
+              }
+            },
+            "required": ["mode", "providers", "twoFactor"],
+            "additionalProperties": false
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": ["id", "auth", "modules"],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
