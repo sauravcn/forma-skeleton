@@ -1,5 +1,14 @@
 # Repository decisions and next steps
 
+## Polished canonical authentication — October 27, 2026
+
+FORMA-0230 redesigns the source-owned authentication component foundation: compact default minimal/split layouts, meaningful default supporting panel, local provider vector marks, semantic primary/social/tertiary actions, theme inheritance and all ten maintained form states. Keyboard/error focus and secret-clearing callbacks remain intact; initial heading autofocus is removed. Four whole-message keys extend the validated catalog. The app repo physically copies this source, retains app-specific operator wording and owns twelve distinct domain compositions.
+
+Actual gates passed: installed neutral consumer, exact controlled all-ten-state desktop/mobile/default/replacement/parent inheritance/secret-clearing proof, social contract tests and freshly generated maintained PostgreSQL/mock OAuth/password/TOTP/recovery consumer. App repo has264 view/stress cases plus sampled contrast, fresh protected Care/Table flows, all12 independent packed builds and final source comparisons with explicit copy/docs-only delta scopes. Main integration/remote verification is pending; do not infer live external providers, production or exhaustive accessibility acceptance. The single tracker and real screenshot gallery/acceptance/local memo are in forma-kernel-care-center docs/design/authentication.
+
+Module README documents full layout/field/button replacement and semantic action variants. Buyers receive selected physical source; neither private seller repo is a runtime dependency. No public npm, paid service, owner secret/database copying or deployment. Stop and explicitly refresh initialized local source copies to see new visuals without replacing data.
+
+
 
 ## Verified six-product / twelve-template delivery — October 27, 2026
 
