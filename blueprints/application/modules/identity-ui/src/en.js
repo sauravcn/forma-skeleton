@@ -1,5 +1,29 @@
 export const en = Object.freeze({
   login: "Sign in",
+  register: "Create account",
+  name: "Name",
+  username: "Username",
+  enroll: "Set up two-factor authentication",
+  currentPassword: "Current password",
+  enrollmentConfirm: "Confirm authenticator setup",
+  enrollmentHelp:
+    "Add this account to your authenticator. Save recovery codes securely before continuing. These secrets are shown only during this setup.",
+  qrAlt: "Authenticator setup QR code generated locally",
+  manualKey: "Manual authenticator setup key",
+  qrHelp:
+    "Scan with your authenticator, or enter the manual key. Keep setup details and recovery codes private.",
+  authenticatorUri: "Authenticator setup URI",
+  backupCodes: "Recovery codes",
+  signOut: "Sign out",
+  checkSession: "Check session",
+  openWorkspace: "Open workspace",
+  loading: "Checking session…",
+  forbidden:
+    "Access is unavailable for this session. Sign out and try again, or contact your administrator.",
+  authenticated: "Session verified",
+  challengeHelp:
+    "Enter a current authenticator code. After an ambiguous failure, check your session before retrying. A used code cannot be reused.",
+  resetInvalid: "This reset link is missing or invalid. Request a new link.",
   identifier: "Email or username",
   password: "Password",
   verify: "Verify your email",

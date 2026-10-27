@@ -101,3 +101,59 @@
 .forma-identity__aside {
   padding: var(--app-panelPadding, clamp(1rem, 4vw, 3rem));
 }
+.forma-identity__secrets {
+  overflow-wrap: anywhere;
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border, currentColor);
+}
+.forma-identity__secrets textarea {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
+  min-height: 6rem;
+  font: inherit;
+  color: inherit;
+  background: var(--app-background, transparent);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Workspace session controls share semantic parent tokens outside auth form scope. */
+.forma-identity-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(0.75rem * var(--app-spacingScale, 1));
+  margin-block: calc(1rem * var(--app-spacingScale, 1));
+  color: var(--app-text, inherit);
+  font-family: var(--app-fontFamily, inherit);
+  min-width: 0;
+}
+.forma-identity-controls button {
+  font-family: var(--app-controlFontFamily, inherit);
+  font-size: var(--app-buttonFontSize, inherit);
+  padding: var(--app-controlPaddingY, 0.65rem) var(--app-controlPaddingX, 1rem);
+  border: 1px solid var(--app-border, currentColor);
+  border-radius: var(--app-controlRadius, 0);
+  color: var(--app-onAccent, inherit);
+  background: var(--app-accent, transparent);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  cursor: pointer;
+}
+.forma-identity-controls button:focus-visible {
+  outline: var(--app-focusWidth, 3px) solid var(--app-focus, currentColor);
+  outline-offset: var(--app-focusOffset, 3px);
+}
+.forma-identity-controls button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.forma-identity-controls [role="alert"] {
+  color: var(--app-error, inherit);
+  flex-basis: 100%;
+  margin: 0;
+}

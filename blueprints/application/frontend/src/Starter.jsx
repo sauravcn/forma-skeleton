@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import config from "./config.js";
+import { IdentityControls } from "./identity-client.jsx";
 import { localization } from "./i18n.js";
 import { recordStats } from "./navigation.js";
 import { components } from "./components/registry.jsx";
@@ -145,6 +146,7 @@ export default function Starter({ page }) {
           {i.t(error)}
         </div>
       )}
+      <IdentityControls />
       {notice && (
         <div className="feedback success-feedback" role="status">
           {i.t(notice)}

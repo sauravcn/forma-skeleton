@@ -225,7 +225,7 @@ fieldset {
 .app-body {
   margin-inline-start: 244px;
   min-height: 100vh;
-  padding-block-end: 42px;
+  padding-block-end: 0;
 }
 .app-topbar {
   display: flex;
@@ -648,10 +648,7 @@ fieldset {
   font-size: calc(8px * var(--app-typeScale));
 }
 .development-notice {
-  position: fixed;
-  inset-block-end: 0;
-  inset-inline: 244px 0;
-  z-index: 10;
+  position: static;
   padding: calc(10px * var(--app-spacingScale))
     calc(25px * var(--app-spacingScale));
   background: var(--app-surface);
@@ -837,9 +834,6 @@ fieldset {
 .layout-top .app-body {
   margin-inline-start: 0;
 }
-.layout-top .development-notice {
-  inset-inline-start: 0;
-}
 .layout-top .app-topbar {
   padding-inline: 40px;
 }
@@ -916,9 +910,6 @@ fieldset {
   .app-body {
     margin-inline-start: 218px;
   }
-  .development-notice {
-    inset-inline-start: 218px;
-  }
   .app-body main {
     padding: calc(30px * var(--app-spacingScale));
   }
@@ -965,9 +956,6 @@ fieldset {
   }
   .app-body {
     margin-inline-start: 200px;
-  }
-  .development-notice {
-    inset-inline-start: 200px;
   }
   .app-topbar {
     gap: calc(12px * var(--app-spacingScale));
@@ -1050,7 +1038,6 @@ fieldset {
     margin-inline-start: 0;
   }
   .development-notice {
-    inset-inline-start: 0;
     padding: calc(9px * var(--app-spacingScale))
       calc(16px * var(--app-spacingScale));
     font-size: calc(9px * var(--app-typeScale));
