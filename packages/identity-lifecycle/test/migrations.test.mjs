@@ -218,6 +218,58 @@ test(
       email: "migration@example.test",
       emailVerified: true,
     });
+    await assert.rejects(
+      policy.approveMembership({
+        userId: "unknown-user",
+        organizationId: "migration-org",
+        pool: identity.pool,
+      }),
+    );
+    await assert.rejects(
+      policy.approveMembership({
+        userId: user.id,
+        organizationId: "migration-org",
+        pool: identity.pool,
+        role: "owner",
+      }),
+    );
+    await identity.pool.query(
+      'UPDATE "user" SET "emailVerified"=FALSE WHERE id=$1',
+      [user.id],
+    );
+    await assert.rejects(
+      policy.approveMembership({
+        userId: user.id,
+        organizationId: "migration-org",
+        pool: identity.pool,
+      }),
+    );
+    await identity.pool.query(
+      'UPDATE "user" SET "emailVerified"=TRUE WHERE id=$1',
+      [user.id],
+    );
+    await policy.approveMembership({
+      userId: user.id,
+      organizationId: "migration-org",
+      pool: identity.pool,
+      role: "viewer",
+    });
+    assert.deepEqual(
+      (
+        await policy.permissionPolicy({
+          userId: user.id,
+          organizationId: "migration-org",
+          pool: identity.pool,
+        })
+      ).permissions,
+      ["records:read"],
+    );
+    await policy.approveMembership({
+      userId: user.id,
+      organizationId: "migration-org",
+      pool: identity.pool,
+      role: "member",
+    });
     await policy.onVerifiedUser({
       userId: user.id,
       organizationId: "migration-org",

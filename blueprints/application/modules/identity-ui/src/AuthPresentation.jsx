@@ -7,6 +7,7 @@ const views = new Set([
   "login",
   "register",
   "enroll",
+  "setPassword",
   "enrollmentConfirm",
   "verify",
   "resetRequest",
@@ -26,6 +27,7 @@ const fields = {
     ["password", "password", "new-password"],
   ],
   enroll: [["currentPassword", "password", "current-password"]],
+  setPassword: [["newPassword", "password", "new-password"]],
   enrollmentConfirm: [["code", "text", "one-time-code"]],
   verify: [],
   resetRequest: [["email", "email", "email"]],
@@ -200,10 +202,18 @@ export default function AuthPresentation({
       )}
       {failed && (
         <p id={`${id}-error`} ref={error} tabIndex={-1} role="alert">
-          {t.error}
+          {errorCode === "social" ? t.socialError : t.error}
         </p>
       )}
       {noticeCode === "accepted" && <p role="status">{t.accepted}</p>}
+      {noticeCode === "socialCancelled" && (
+        <p role="status">{t.socialCancelled}</p>
+      )}
+      {view === "setPassword" && <p>{t.setPasswordHelp}</p>}
+      {view === "login" &&
+        providers.some((provider) => provider.mode === "mock") && (
+          <p>{t.mockHelp}</p>
+        )}
       <form ref={form} onSubmit={submit} aria-busy={pending}>
         {fields[view].map(([key, type, autoComplete]) => (
           <AuthField
@@ -232,7 +242,10 @@ export default function AuthPresentation({
             disabled={pending}
             onClick={() => providerAction(provider)}
           >
-            {identityText(t.provider, { provider: provider.label })}
+            {identityText(
+              provider.mode === "mock" ? t.mockProvider : t.provider,
+              { provider: provider.label },
+            )}
           </AuthButton>
         ))}
       {typeof onNavigate === "function" && (

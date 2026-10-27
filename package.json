@@ -13,7 +13,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test packages/config/test/*.test.mjs && npm run test --workspace create-forma-app && npm run test:templates",
+    "test": "node --test packages/config/test/*.test.mjs && npm run test --workspace create-forma-app && npm run test:templates && npm run test:social-presentation",
     "check:config": "node packages/config/src/check.mjs",
     "build:cli": "npm run build --workspace create-forma-app",
     "test:consumer": "node tests/blueprint-consumers/run-neutral.mjs",
@@ -26,7 +26,9 @@
     "test:auth-presentation": "node tests/blueprint-consumers/run-auth-presentation.mjs",
     "test:presentation-accessibility": "node tests/blueprint-consumers/run-presentation-accessibility.mjs",
     "test:theme-contract": "node tests/blueprint-consumers/run-theme-contract.mjs",
-    "test:authenticated-consumer": "node tests/blueprint-consumers/run-authenticated.mjs"
+    "test:authenticated-consumer": "node tests/blueprint-consumers/run-authenticated.mjs",
+    "test:social-presentation": "node --test tests/blueprint-consumers/test-social-presentation.mjs",
+    "test:mock-social-consumer": "node tests/blueprint-consumers/run-mock-social.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0",

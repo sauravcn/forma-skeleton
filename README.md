@@ -7,7 +7,7 @@ Two development profiles are implemented:
 - **public**: synthetic, no authentication, SQLite records.
 - **password-totp**: maintained username/email/password verification/reset, mandatory authenticator TOTP/recovery, server-verified sessions and owner-scoped records. Identity uses an explicitly configured isolated PostgreSQL store; domain records use a separately scoped SQLite store.
 
-The actual independently generated authenticated app passed installed-package/browser acceptance with private synthetic mail capture. This proves the tested development flows, not live email delivery, social sign-in, production hosting or a security certification. Per-agent review and integration are recorded in GitHub PR history. Providers remain absent; unsupported combinations fail before output. The CLI is a locally packed private distribution, not a published npm package.
+The actual independently generated authenticated app passed installed-package/browser acceptance with private synthetic mail capture. This proves the tested development flows, not live email delivery, real external social sign-in, production hosting or a security certification. Per-agent review and integration are recorded in GitHub PR history. Live provider credentials/adapters remain absent. Explicit loopback-only development MOCK providers (Google/Facebook/GitHub/Microsoft/Apple) now exercise maintained callbacks, password setup and mandatory MFA. Unsupported combinations fail before output. The CLI is a locally packed private distribution, not a published npm package.
 
 ## Generate a complete child
 
@@ -38,7 +38,7 @@ Each child physically includes all required Forma frontend/backend/identity/poli
 
 The child owns its semantic theme tokens, full component/source replacements, English catalogs and validated navigation JSON. Sidebar, top, combined and mobile navigation retain stable IDs. Parent controls cover typography, colors, focus, spacing, radius and motion; structural changes use source/registry replacement. See the [theme contract](docs/architecture/theme-contract.md) for exact bounds. Authentication and domain authorization remain server-enforced regardless of component/nav replacement.
 
-Generated AGENTS.md and a machine-readable records OpenAPI contract support reviewed developer-assistant customization. They do not provide a hosted prompt service or start an autonomous agent. Safe customer upgrades, social providers, guided nontechnical AI customization, purchase licensing, managed hosting and existing-app adoption remain separately unfinished. FORMA-0016 remains open.
+Generated AGENTS.md and a machine-readable records OpenAPI contract support reviewed developer-assistant customization. They do not provide a hosted prompt service or start an autonomous agent. Live social provider acceptance, neutral-starter upgrades, guided nontechnical AI customization, purchase licensing and managed hosting remain separately unfinished. Six existing apps have adopted the foundation; see the canonical application tracker for current boundaries. FORMA-0016 remains open.
 
 ## Verification
 
@@ -60,3 +60,6 @@ Actual generated-app captures: [desktop sign-in](docs/screenshots/authenticated-
 Read [AGENTS.md](AGENTS.md), [TODO.md](TODO.md), [HANDOFF.md](HANDOFF.md), [TRACKING.md](TRACKING.md) and the [standalone contract](docs/architecture/standalone-contract.md). The user-named AI roles Aarav, Saurya and Shreesh work under Codex; they are active-task roles, not permanent services or independent GitHub identities. No outbound local-chat channel is verified.
 
 Earlier checkpoints used direct main pushes and have no PR history. The [new PR workflow](docs/engineering/PULL_REQUEST_WORKFLOW.md) records the resolved network incident and required per-agent PR review sequence. The recovery snapshot remains on `feature/forma-0016-generator`; agent PRs integrate through the temporary review branch before the final reviewed main PR. Do not treat a feature checkpoint as a main merge. Local development must fetch/reconcile source, board and handoff before overlapping edits. Never discard local changes or copy runtime data to reconcile code.
+
+
+Local mocked social integration (FORMA-0192): generated identity runtime requires explicit FORMA_MOCK_OAUTH=1, FORMA_ENVIRONMENT=local, NODE_ENV=development and dev:true serving; production/optimized serving refuses mocks. No real social account/secret is used. Use the six-app application repository's docs/engineering/LOCAL_MOCK_IDENTITY.md for the normal protected launcher with private mail/inbox and operator approval. Generated neutral identity applications still need their documented explicit database/mail setup; mock flags do not provision those services or automatically grant organization access.

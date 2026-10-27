@@ -116,6 +116,32 @@ export async function onVerifiedUser({ userId, organizationId, pool }) {
   );
 }
 
+/** Explicit operator admission; OAuth verification alone never inserts a membership. */
+export async function approveMembership({
+  userId,
+  organizationId,
+  pool,
+  role = "member",
+}) {
+  if (
+    typeof userId !== "string" ||
+    !userId ||
+    userId.length > 200 ||
+    typeof organizationId !== "string" ||
+    !organizationId ||
+    !Object.hasOwn(permissions, role)
+  )
+    throw Error(
+      "Explicit verified account, organization and supported role required",
+    );
+  const result = await pool.query(
+    `INSERT INTO identity_memberships(user_id,organization_id,role) SELECT id,$2,$3 FROM "user" WHERE id=$1 AND "emailVerified"=TRUE ON CONFLICT(user_id,organization_id) DO UPDATE SET role=EXCLUDED.role,active=TRUE`,
+    [userId, organizationId, role],
+  );
+  if (result.rowCount !== 1)
+    throw Error("Approval requires an existing verified child account");
+}
+
 /** Operator-only source API; never a first-signup or browser promotion. */
 export async function bootstrapAdministrator({ userId, organizationId, pool }) {
   if (typeof userId !== "string" || !userId || userId.length > 200)
