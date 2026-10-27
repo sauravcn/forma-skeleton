@@ -34,3 +34,48 @@ Use `--profile password-totp` (or config auth mode `password`, providers `[]`, t
 Prepack copies canonical lifecycle, boundary Python, presentation and original record SQL physically into the versioned snapshot. Provenance records original same-repository paths plus revision/dirty/content hashes; no sibling source or private runtime dependency remains. Fixed public/auth selectors are source assets, never executable JSON interpolation. Authenticated frontend adds pinned local `qrcode`; identity uses pinned Better Auth, pg, utils and Nodemailer. `authenticated-lock.json` is a separate reviewed lock fixture. Profile-specific package dependency mismatch refuses output. No dependencies resolve during generation.
 
 The authenticated profile is under active integration; do not infer installed-package/browser acceptance from successful config or assembly tests. Public regression and authenticated external-consumer proofs are separate gates.
+
+### Six business-app templates (optional distribution catalog)
+
+A catalog-enabled package supports the conventional command:
+
+```sh
+npx create-forma-app my-care-center --template care-center --yes
+```
+
+Other template names are `field-service`, `accounting-studio`, `table-kitchen`,
+`clinic-desk` and `client-studio`. The destination is your directory name; each
+app retains its stable ID, existing base path, custom theme and business source.
+These templates require the password + mandatory TOTP/recovery profile and
+operator-configured PostgreSQL, SMTP, secrets and membership approval. Follow
+the generated README and ENVIRONMENT.example; generation does not configure or
+start those services. `--id`, `--name`, `--theme`, `--navigation`, `--config` and
+`--profile` are neutral-starter options and are rejected with `--template`.
+Customize the copied app-owned source after generation. `--dry-run` validates
+and lists the selected template without writing a destination.
+
+Omitting `--template` preserves the neutral starter, its configuration prompts
+and existing profiles. A package built without the optional catalog reports a
+clear unsupported-template error rather than fetching private source.
+
+Maintainers prepare reviewed complete app exports in an explicit catalog with
+one directory per template. Then build or pack with that input:
+
+```sh
+node tools/create-forma-app/scripts/build.mjs --catalog-dir /reviewed/catalog
+FORMA_TEMPLATE_CATALOG_DIR=/reviewed/catalog npm pack --workspace tools/create-forma-app
+```
+
+The environment variable is required for `npm pack` because its prepack hook
+rebuilds the bundle. No catalog is inferred from sibling checkout locations.
+The build validates all six inventories, hashes, fixed profiles and completion
+markers, refuses pending catalogs/symlinks/private runtime artifacts, and copies
+the exports into self-contained path/base64 JSON payloads in the package. This
+preserves exact source bytes, including `.gitignore` and lockfiles, through npm
+packing rules. Generation validates and decodes those payloads into ordinary
+customer-owned files; it uses bundled bytes only,
+without network access or either seller repository. Existing export manifests,
+source provenance, third-party notices and customer AGENTS instructions remain
+included. These hashes provide integrity checks, not a signed license grant or
+supplier-authenticity guarantee. No public npm publication is performed by this
+workflow; the package can be installed/tested from its tarball first.

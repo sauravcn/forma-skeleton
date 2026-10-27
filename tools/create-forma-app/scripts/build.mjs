@@ -3,6 +3,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import {
+  templates,
+  readTemplate,
+  serializeTemplate,
+} from "../src/templates.mjs";
+const args = process.argv.slice(2);
+if (args.length && (args.length !== 2 || args[0] !== "--catalog-dir"))
+  throw new Error("Usage: build.mjs [--catalog-dir /reviewed/exports]");
+const catalog = args[1] || process.env.FORMA_TEMPLATE_CATALOG_DIR;
 const here = path.dirname(fileURLToPath(import.meta.url)),
   pkg = path.resolve(here, ".."),
   repo = path.resolve(pkg, "../.."),
@@ -98,6 +107,22 @@ try {
     await copy(path.join(repo, origin), target);
   }
   await copy(path.join(pkg, "assets"), path.join(temporary, "assets"));
+  if (catalog) {
+    if (await exists(path.join(catalog, ".catalog.pending")))
+      throw new Error("Template catalog is incomplete");
+    for (const id of templates) {
+      const template = await readTemplate(
+        path.join(path.resolve(catalog), id),
+        id,
+      );
+      await fs.mkdir(path.join(temporary, "templates"), { recursive: true });
+      await fs.writeFile(
+        path.join(temporary, "templates", `${id}.json`),
+        serializeTemplate(template, id),
+        { flag: "wx" },
+      );
+    }
+  }
   let revision = null,
     dirty = null;
   try {

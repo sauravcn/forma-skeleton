@@ -57,7 +57,7 @@ export async function readBundle(root = path.join(packageRoot, "bundle")) {
     throw new Error("Bundled source inventory digest mismatch");
   return { root, manifest, provenance };
 }
-async function destinationPath(value) {
+export async function destinationPath(value) {
   if (
     typeof value !== "string" ||
     !value ||
@@ -376,6 +376,9 @@ export async function planGeneration(config, destination, { bundle } = {}) {
 }
 export async function generate(config, destination, options = {}) {
   const plan = await planGeneration(config, destination, options);
+  return writePlan(plan, options);
+}
+export async function writePlan(plan, options = {}) {
   if (options.dryRun)
     return {
       destination: plan.destination,

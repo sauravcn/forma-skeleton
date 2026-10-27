@@ -4,7 +4,9 @@ import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { pathToFileURL } from "node:url";
 import { defaultConfig, generate } from "../src/generate.mjs";
-export const help = `create-forma-app [destination] [--yes] [--id slug] [--name text]\n  [--navigation sidebar|top|combined] [--theme linen|midnight]\n  [--profile public|password-totp] [--config app.config.json] [--dry-run]\n\nGenerates a public synthetic starter by default, or password+mandatory-TOTP source with --profile password-totp.\nProviders are absent. Live mail, production readiness, hosting and purchase entitlement are not implied.\nUse --yes for explicit defaults in noninteractive scripts. Existing destinations are refused.\n`;
+import { generateTemplate } from "../src/generate-template.mjs";
+import { templates } from "../src/templates.mjs";
+export const help = `create-forma-app [destination] [--yes] [--id slug] [--name text]\n  [--navigation sidebar|top|combined] [--theme linen|midnight]\n  [--template field-service|accounting-studio|table-kitchen|clinic-desk|client-studio|care-center]\n  [--profile public|password-totp] [--config app.config.json] [--dry-run]\n\nGenerates a public synthetic starter by default, or password+mandatory-TOTP source with --profile password-totp.\nApp templates preserve their stable IDs/base paths and require password+TOTP; destination names do not rename the app. Neutral-only flags cannot override app templates. Providers are absent. Live mail, production readiness, hosting and purchase entitlement are not implied.\nUse --yes for explicit defaults in noninteractive scripts. Existing destinations are refused.\n`;
 export async function configFromAnswers(options, ask) {
   let destination = options.destination;
   if (!destination)
@@ -65,6 +67,7 @@ export function parseArgs(argv) {
     "--theme": "theme",
     "--config": "configFile",
     "--profile": "profile",
+    "--template": "template",
   };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
@@ -112,6 +115,37 @@ export async function main(
       (await reader.question(`${label} [${fallback}]: `)).trim() || fallback
     );
   };
+  if (options.template !== undefined) {
+    if (!templates.includes(options.template))
+      throw new Error(`Unknown app template: ${options.template}`);
+    for (const key of [
+      "id",
+      "name",
+      "navigation",
+      "theme",
+      "configFile",
+      "profile",
+    ])
+      if (options[key] !== undefined)
+        throw new Error(
+          `--template cannot be combined with neutral starter option ${key}`,
+        );
+    let result;
+    try {
+      const destination =
+        options.destination ||
+        (options.yes
+          ? options.template
+          : await ask("Project directory", options.template));
+      result = await generateTemplate(options.template, destination, {
+        dryRun: options.dryRun,
+      });
+    } finally {
+      reader?.close();
+    }
+    output.write(JSON.stringify(result, null, 2) + "\n");
+    return;
+  }
   let requested;
   try {
     requested = await configFromAnswers(options, ask);
