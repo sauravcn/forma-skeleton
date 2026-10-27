@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS forma_identity_policy(singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK(singleton),app_id TEXT NOT NULL,organization_id TEXT NOT NULL,require_mfa BOOLEAN NOT NULL,epoch INTEGER NOT NULL DEFAULT 1);
+   CREATE TABLE IF NOT EXISTS forma_user_security(user_id TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,epoch INTEGER NOT NULL DEFAULT 1);
+   CREATE TABLE IF NOT EXISTS forma_session_assurance(session_id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,user_epoch INTEGER NOT NULL,policy_epoch INTEGER NOT NULL,method TEXT NOT NULL CHECK(method IN ('totp','recovery')),asserted_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+   CREATE TABLE IF NOT EXISTS forma_used_totp(user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,factor_id TEXT NOT NULL,counter BIGINT NOT NULL,PRIMARY KEY(user_id,factor_id,counter));

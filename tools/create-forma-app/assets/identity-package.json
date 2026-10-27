@@ -1,0 +1,21 @@
+{
+  "name": "generated-identity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "better-auth": "1.7.12",
+    "pg": "8.23.1",
+    "@better-auth/utils": "0.5.0",
+    "nodemailer": "10.2.1",
+    "qrcode": "1.5.4",
+    "react": "19.3.1",
+    "next": "16.4.2"
+  },
+  "scripts": {
+    "test": "node --test node/test/*.test.mjs"
+  }
+}

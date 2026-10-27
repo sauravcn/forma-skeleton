@@ -25,11 +25,14 @@
     "test:navigation": "node tests/blueprint-consumers/run-navigation.mjs",
     "test:auth-presentation": "node tests/blueprint-consumers/run-auth-presentation.mjs",
     "test:presentation-accessibility": "node tests/blueprint-consumers/run-presentation-accessibility.mjs",
-    "test:theme-contract": "node tests/blueprint-consumers/run-theme-contract.mjs"
+    "test:theme-contract": "node tests/blueprint-consumers/run-theme-contract.mjs",
+    "test:authenticated-consumer": "node tests/blueprint-consumers/run-authenticated.mjs"
   },
   "devDependencies": {
+    "ajv": "8.20.0",
+    "nodemailer": "10.2.1",
     "playwright": "1.64.1",
     "prettier": "3.6.2",
-    "ajv": "8.20.0"
+    "qrcode": "1.5.4"
   }
 }

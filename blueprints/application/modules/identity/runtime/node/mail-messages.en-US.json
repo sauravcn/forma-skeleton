@@ -1,0 +1,10 @@
+{
+  "verification": {
+    "subject": "Verify your {appName} account",
+    "text": "Verify your {appName} account using this link:\n{url}\nIf you did not request this, ignore this message."
+  },
+  "reset": {
+    "subject": "Reset your {appName} password",
+    "text": "Reset your {appName} password using this link:\n{url}\nIf you did not request this, ignore this message."
+  }
+}

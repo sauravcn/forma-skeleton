@@ -1,4 +1,4 @@
-import { proxyRecords } from "../../../../src/server/records.mjs";
+import { proxyRecords } from "../../../../src/identity-server.mjs";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function PATCH(request, context) {

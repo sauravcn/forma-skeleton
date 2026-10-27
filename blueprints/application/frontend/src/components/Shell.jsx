@@ -198,7 +198,9 @@ export default function Shell({
           <span>{i.t("app.footer")}</span>
         </footer>
         <div className="development-notice" role="note">
-          {i.t("app.publicNotice")}
+          {i.t(
+            config.auth.mode === "none" ? "app.publicNotice" : "app.authNotice",
+          )}
         </div>
       </div>
       <dialog
@@ -231,7 +233,11 @@ export default function Shell({
           </button>
         </div>
         <nav aria-label={i.t("app.navigation")}>{links("mobile")}</nav>
-        <p className="mobile-notice">{i.t("app.publicNotice")}</p>
+        <p className="mobile-notice">
+          {i.t(
+            config.auth.mode === "none" ? "app.publicNotice" : "app.authNotice",
+          )}
+        </p>
       </dialog>
     </div>
   );

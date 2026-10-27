@@ -5,6 +5,9 @@ import { defaultComponents } from "./components.jsx";
 
 const views = new Set([
   "login",
+  "register",
+  "enroll",
+  "enrollmentConfirm",
   "verify",
   "resetRequest",
   "reset",
@@ -16,6 +19,14 @@ const fields = {
     ["identifier", "text", "username"],
     ["password", "password", "current-password"],
   ],
+  register: [
+    ["name", "text", "name"],
+    ["username", "text", "username"],
+    ["email", "email", "email"],
+    ["password", "password", "new-password"],
+  ],
+  enroll: [["currentPassword", "password", "current-password"]],
+  enrollmentConfirm: [["code", "text", "one-time-code"]],
   verify: [],
   resetRequest: [["email", "email", "email"]],
   reset: [["newPassword", "password", "new-password"]],
@@ -35,6 +46,7 @@ export default function AuthPresentation({
   errorCode = null,
   noticeCode = null,
   aside = null,
+  enrollmentDetails = null,
 }) {
   if (!views.has(view) || !["minimal", "split"].includes(variant))
     throw new Error("Unsupported identity presentation");
@@ -62,12 +74,15 @@ export default function AuthPresentation({
   const id = useId(),
     form = useRef(null),
     heading = useRef(null),
-    error = useRef(null);
+    error = useRef(null),
+    generation = useRef(0);
   const [submitting, setSubmitting] = useState(false),
     [localError, setLocalError] = useState(false);
   const pending = busy || submitting,
     failed = localError || Boolean(errorCode);
   useEffect(() => {
+    generation.current += 1;
+    setSubmitting(false);
     form.current?.reset();
     setLocalError(false);
     heading.current?.focus();
@@ -80,6 +95,7 @@ export default function AuthPresentation({
     if (pending) return;
     const submittedForm = event.currentTarget;
     const submittedView = view;
+    const submittedGeneration = generation.current;
     const values = Object.fromEntries(new FormData(submittedForm));
     let rejected = false;
     if (fields[view].some(([key]) => !String(values[key] || "").trim())) {
@@ -92,9 +108,10 @@ export default function AuthPresentation({
       await onSubmit({ view, values });
     } catch {
       rejected = true;
-      setLocalError(true);
+      if (generation.current === submittedGeneration) setLocalError(true);
     } finally {
       // Clear secrets; preserve only nonsecret identifier on a failed same-view request.
+      if (generation.current !== submittedGeneration) return;
       submittedForm.reset();
       if (rejected && submittedForm === form.current) {
         const key =
@@ -129,6 +146,58 @@ export default function AuthPresentation({
         {t[view]}
       </h1>
       {view === "verify" && <p>{t.verifyHelp}</p>}
+      {view === "challenge" && <p>{t.challengeHelp}</p>}
+      {view === "enrollmentConfirm" && enrollmentDetails && (
+        <section
+          className="forma-identity__secrets"
+          aria-label={t.enrollmentConfirm}
+        >
+          <p>{t.enrollmentHelp}</p>
+          <p>{t.qrHelp}</p>
+          {enrollmentDetails.qrDataURL?.startsWith(
+            "data:image/png;base64,",
+          ) && (
+            <img
+              src={enrollmentDetails.qrDataURL}
+              width="240"
+              height="240"
+              alt={t.qrAlt}
+            />
+          )}
+          {enrollmentDetails.manualKey && (
+            <div>
+              <label htmlFor={`${id}-manual-key`}>{t.manualKey}</label>
+              <input
+                id={`${id}-manual-key`}
+                aria-label={t.manualKey}
+                readOnly
+                value={enrollmentDetails.manualKey}
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </div>
+          )}
+          <label htmlFor={`${id}-authenticator-uri`}>
+            {t.authenticatorUri}
+          </label>
+          <textarea
+            id={`${id}-authenticator-uri`}
+            aria-label={t.authenticatorUri}
+            readOnly
+            value={enrollmentDetails.totpURI}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <h2>{t.backupCodes}</h2>
+          <ul>
+            {enrollmentDetails.backupCodes.map((code, index) => (
+              <li key={index}>
+                <code>{code}</code>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {failed && (
         <p id={`${id}-error`} ref={error} tabIndex={-1} role="alert">
           {t.error}
@@ -183,6 +252,15 @@ export default function AuthPresentation({
               onClick={() => onNavigate("login")}
             >
               {t.back}
+            </AuthButton>
+          )}
+          {view === "login" && (
+            <AuthButton
+              type="button"
+              disabled={pending}
+              onClick={() => onNavigate("register")}
+            >
+              {t.register}
             </AuthButton>
           )}
           {view === "challenge" && (
