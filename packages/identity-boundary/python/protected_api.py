@@ -176,6 +176,9 @@ def main():
         os.environ["PROOF_ORGANIZATION_ID"],
         os.environ["PROOF_SESSION_COOKIE_NAME"],
         os.environ.get("PROOF_REQUIRED_ASSURANCE", "basic-session-fixture"),
+        allowed_permissions=frozenset(
+            ("records:read", "records:write", "records:read:any", "records:write:any")
+        ),
     )
     records = Records(os.environ["PROOF_DATABASE_PATH"])
     server = ThreadingHTTPServer(

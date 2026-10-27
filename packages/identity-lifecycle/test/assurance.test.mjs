@@ -14,6 +14,10 @@ const execFile = (command, args) =>
 import { createOTP } from "@better-auth/utils/otp";
 import { base32 } from "@better-auth/utils/base32";
 import { identityServer } from "../../identity-boundary/src/server.mjs";
+import {
+  migrateRecordsPolicy,
+  recordsPermissionPolicy,
+} from "./fixtures/records-policy.mjs";
 import { fileURLToPath } from "node:url";
 test(
   "session-bound MFA assurance protects real Python domain API",
@@ -75,6 +79,7 @@ test(
       secret: randomBytes(32).toString("hex"),
       appId: "assurance-proof",
       organizationId: "synthetic-org",
+      permissionPolicy: recordsPermissionPolicy,
       requireMfa: true,
       enableTotp: true,
       publicOrigin: origin,
@@ -96,6 +101,7 @@ test(
       }
     }
     await identity.initialize();
+    await migrateRecordsPolicy(identity.pool);
     async function post(route, body, cookie) {
       return fetch(`${origin}/api/auth/${route}`, {
         method: "POST",
@@ -1036,6 +1042,47 @@ test(
         assert.equal(verified.status, 200);
         activeCookie = cookieOf(verified);
         assert.equal((await domain(activeCookie)).status, 200);
+      },
+    );
+    await t.test(
+      "failed maintained logout deletion cannot restore captured assured access",
+      async () => {
+        const captured = activeCookie;
+        await identity.pool.query(
+          `CREATE FUNCTION fail_session_delete() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Synthetic logout deletion failure'; END $$;CREATE TRIGGER fail_session_delete BEFORE DELETE ON session FOR EACH ROW EXECUTE FUNCTION fail_session_delete()`,
+        );
+        try {
+          assert.equal((await post("sign-out", {}, captured)).status, 503);
+          assert.equal((await domain(captured)).status, 403);
+        } finally {
+          await identity.pool.query(
+            "DROP TRIGGER fail_session_delete ON session;DROP FUNCTION fail_session_delete()",
+          );
+        }
+        assert.equal((await domain(captured)).status, 403);
+        activeCookie = await recover();
+      },
+    );
+    await t.test(
+      "pending challenge logout clears server state and captured cookie cannot resume",
+      async () => {
+        const pending = await challenge();
+        assert.equal((await post("sign-out", {}, pending)).status, 200);
+        const descriptor = await fetch(`${origin}/api/auth/forma-state`, {
+          headers: { Cookie: pending },
+          signal: AbortSignal.timeout(5000),
+        });
+        assert.equal((await descriptor.json()).stage, "signed-out");
+        assert.equal(
+          (
+            await post(
+              "two-factor/verify-backup-code",
+              { code: backupCodes[0] },
+              pending,
+            )
+          ).status,
+          401,
+        );
       },
     );
     await t.test(

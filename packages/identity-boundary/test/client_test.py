@@ -11,7 +11,17 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
-from identity_client import Denied, IdentityClient
+from identity_client import Denied, IdentityClient as PrincipalClient
+
+
+def IdentityClient(*args, **kwargs):
+    return PrincipalClient(
+        *args,
+        allowed_permissions=frozenset(
+            ("records:read", "records:write", "records:read:any", "records:write:any")
+        ),
+        **kwargs,
+    )
 
 
 class ClientTests(unittest.TestCase):
